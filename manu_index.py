@@ -3,119 +3,209 @@ import pickle
 import shutil
 import uuid
 import os
-from typing import (
-    List, 
-    Optional, 
-    Any
-)
-import logging
+from typing import List, Optional, Any
 
+import logging
+from rank_bm25 import BM25Okapi
 from sklearn.metrics.pairwise import cosine_similarity
-from summary import DocumentSummary
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_classic.retrievers import EnsembleRetriever
 from langchain_community.vectorstores import FAISS
 from langchain_core.documents import Document
 from langchain_community.retrievers import BM25Retriever
 
+from summary import DocumentSummary
+
 logger = logging.getLogger(__name__)
 
 META_FILENAME = "_meta.json"
 
+
 class ManuIndex:
+    """Hybrid retrieval index that combines dense (FAISS) and lexical (BM25) search.
+
+    Supports document ingestion with semantic chunking, persistent storage,
+    and flexible retrieval strategies (dense, sparse, or hybrid).
+    """
+
     def __init__(
-            self,
-            embeddings: Any,
-            client: Any,
-            persist_directory: str = "manu_index",
+        self,
+        embeddings: Any,
+        client: Any,
+        persist_directory: str = "manu_index",
     ):
-        """Initialize the ManuIndex with embeddings and a directory to persist the index.
-        
+        """
         Args:
-            embeddings (Any): The embedding model to use for creating vector representations of documents.
-            persist_directory (str): The directory where the index and metadata will be stored.    
+            embeddings: Embedding model used to encode text into vectors.
+            client: LLM client used for generating document summaries.
+            persist_directory: Directory where the index and metadata are stored.
         """
         self.embeddings = embeddings
         self.client = client
         self.persist_directory = persist_directory
 
-    def _add(self, document, doc_id, **kwargs):
-        self._create_summary(document, doc_id=doc_id)
-        return self._create_semantic_chunks(document, **kwargs)
-    
     def add_document(
-            self, 
-            documents: str | bytes, 
-            chunk_size: int = 100, 
-            chunk_overlap: int = 0,
-            threshold: float = 0.7
+        self,
+        documents: str | bytes,
+        chunk_size: int = 100,
+        chunk_overlap: int = 0,
+        threshold: float = 0.7,
     ) -> FAISS:
-        """Add documents to the index, creating a new FAISS vector store for each document.
-        
+        """Ingest a document into the index.
+
+        Reads the document, splits it into semantic chunks, builds both a FAISS
+        vector store and a BM25 lexical store, and persists them to disk.
+
         Args:
-            documents (str | bytes): The document(s) to be added to the index. Can be a string (file path) or bytes.
-            chunk_size (int): The size of each chunk for splitting the documents.
-            chunk_overlap (int): The overlap size between chunks.
-            threshold (float): The similarity threshold for semantic chunking.
+            documents: Raw document content — a UTF-8 string, bytes, or a path
+                       to a Markdown file.
+            chunk_size: Maximum character size of each initial (pre-semantic) chunk.
+            chunk_overlap: Character overlap between adjacent initial chunks.
+            threshold: Cosine-similarity threshold for the semantic chunking step.
+                       Adjacent chunks below this value trigger a new chunk boundary.
+
         Returns:
-            FAISS: The FAISS vector store containing the added documents.
+            The FAISS vector store created for this document.
         """
-        doc_id = str(uuid.uuid4().hex[:6])
-        # Read pdf files as bytes and convert to string if necessary
         if not isinstance(documents, (str, bytes)):
-            raise ValueError("Documents must be a string, or bytes.")
+            raise ValueError("documents must be a str or bytes.")
+
         if isinstance(documents, bytes):
             documents = documents.decode("utf-8", errors="ignore")
 
-        # Read markdown files as string if necessary
         if isinstance(documents, str) and documents.endswith(".md"):
             with open(documents, "r", encoding="utf-8") as f:
                 documents = f.read()
 
-        documents = self._add(
-            documents, 
+        doc_id = uuid.uuid4().hex[:6]
+
+        chunks = self._add(
+            documents,
             doc_id=doc_id,
-            chunk_size=chunk_size, 
+            chunk_size=chunk_size,
             chunk_overlap=chunk_overlap,
-            threshold=threshold
+            threshold=threshold,
         )
 
-        logger.info(f"Creating lexical store for document: {doc_id}")
-        lexical_store = self._lexical_store(
-            doc_id=doc_id, 
-            documents=documents, 
-            top_k=3     # Fixed top_k for lexical store, cannot be parameterized
-        )
-        vector_store = FAISS.from_documents(
-            documents=documents,
-            embedding=self.embeddings,
-            # distance_strategy=DistanceStrategy.COSINE,
-        )
+        self._lexical_store(doc_id=doc_id, documents=chunks, top_k=3)
+
+        vector_store = FAISS.from_documents(documents=chunks, embedding=self.embeddings)
         vector_store.save_local(self.persist_directory, index_name=doc_id)
         return vector_store
-    
-    def _lexical_store(
-            self, 
-            doc_id: str, 
-            documents: List[Document], 
-            top_k: int
-    ):
-        bm25_retriever = BM25Retriever.from_documents(documents)
-        bm25_retriever.k = top_k
 
-        logger.info(f"Creating lexical store for document: {doc_id}")
+    def search(
+        self,
+        query: str,
+        top_k: int = 3,
+        lambda_mult: float = 0.5,
+        alpha: float = 0.5,
+        search_strategy: Optional[str] = None,
+    ) -> List[str]:
+        """Retrieve relevant passages for a query.
+
+        Args:
+            query: Natural-language search query.
+            top_k: Number of passages to return.
+            lambda_mult: MMR diversity parameter (0 = max diversity, 1 = max relevance).
+            alpha: Weight given to dense retrieval in hybrid mode (BM25 gets 1 - alpha).
+            search_strategy: ``"dense"`` for vector-only, ``"sparse"`` for BM25-only,
+                             or ``None`` (default) for hybrid.
+
+        Returns:
+            List of matching passage strings.
+        """
+        query_embedding = self.embeddings.embed_query(query)
+        doc_id = self._find_collection(query_embedding)
+
+        vector_store = FAISS.load_local(
+            folder_path=self.persist_directory,
+            embeddings=self.embeddings,
+            index_name=doc_id,
+            allow_dangerous_deserialization=True,
+        )
+
+        if search_strategy == "dense":
+            retriever = self._dense_retrieval(vector_store, top_k, lambda_mult)
+            return [doc.page_content for doc in retriever.invoke(query)]
+
+        if search_strategy == "sparse":
+            retriever = self._sparse_retrieval(doc_id)
+            return [doc.page_content for doc in retriever.invoke(query)]
+
+        # Default: hybrid
+        retriever = self._hybrid_retrieval(
+            dense=self._dense_retrieval(vector_store, top_k, lambda_mult),
+            sparse=self._sparse_retrieval(doc_id),
+            alpha=alpha,
+        )
+        return [doc.page_content for doc in retriever.invoke(query)]
+
+    def info(self) -> List[dict]:
+        """Return metadata (doc_id and summary) for every indexed document.
+
+        Returns:
+            List of ``{"doc_id": ..., "summary": ...}`` dicts.
+
+        Raises:
+            FileNotFoundError: If no documents have been indexed yet.
+            ValueError: If the metadata file is corrupted.
+        """
+        data = self._load_meta()
+        return [{"doc_id": e["doc_id"], "summary": e["summary"]} for e in data]
+
+    def delete(self, doc_id: str) -> None:
+        """Remove a document and all its associated files from the index.
+
+        Args:
+            doc_id: The document identifier returned when the document was added.
+        """
+        # Remove FAISS index files
+        for filename in os.listdir(self.persist_directory):
+            is_index_file = filename.endswith(".index") or filename.endswith(".faiss")
+            if filename.startswith(doc_id) and is_index_file:
+                os.remove(os.path.join(self.persist_directory, filename))
+
+        # Remove BM25 pickle
         bm25_path = os.path.join(self.persist_directory, f"{doc_id}_tsr.pkl")
-        with open(bm25_path, "wb") as f:
-            pickle.dump(bm25_retriever, f)
+        if os.path.exists(bm25_path):
+            os.remove(bm25_path)
 
-    def _create_summary(self, document, doc_id: str):
+        # Remove from metadata
+        meta_path = os.path.join(self.persist_directory, META_FILENAME)
+        if os.path.exists(meta_path):
+            try:
+                with open(meta_path, "r") as f:
+                    data = json.load(f)
+            except json.JSONDecodeError:
+                data = []
+            data = [e for e in data if e["doc_id"] != doc_id]
+            with open(meta_path, "w") as f:
+                json.dump(data, f, indent=2)
+
+    def clear(self) -> None:
+        """Delete the entire index directory and all its contents."""
+        if os.path.exists(self.persist_directory):
+            shutil.rmtree(self.persist_directory)
+        logger.info("Cleared the entire index at %s.", self.persist_directory)
+
+    def _add(self, document: str, doc_id: str, **kwargs) -> List[Document]:
+        self._create_summary(document, doc_id=doc_id)
+        return self._create_semantic_chunks(document, **kwargs)
+
+    def _create_summary(self, document: str, doc_id: str) -> None:
+        """Summarize a document and append the result to the metadata file."""
         summary = DocumentSummary(document=document, client=self.client).summarize()
-        embedding = self.embeddings.encode(summary)
+        embedding = self.embeddings.embed_query(summary)
 
-        data = {"doc_id": doc_id, "values": embedding.tolist(), "summary": summary}
-        logger.info(f"Created summary for document: {doc_id}")
+        entry = {
+            "doc_id": doc_id,
+            "values": embedding,
+            "summary": summary,
+        }
+
         os.makedirs(self.persist_directory, exist_ok=True)
         meta_path = os.path.join(self.persist_directory, META_FILENAME)
+
         existing = []
         if os.path.exists(meta_path):
             with open(meta_path, "r") as f:
@@ -124,194 +214,104 @@ class ManuIndex:
                 except json.JSONDecodeError:
                     existing = []
 
-        existing.append(data)
+        existing.append(entry)
+        self._write_meta(existing)
+        logger.info("Created summary for document: %s", doc_id)
+
+    def _write_meta(self, entries: list) -> None:
+        """Write metadata entries to disk with inline embedding arrays for readability."""
+        meta_path = os.path.join(self.persist_directory, META_FILENAME)
         with open(meta_path, "w") as f:
             f.write("[\n")
-            for i, entry in enumerate(existing):
+            for i, entry in enumerate(entries):
                 values_inline = json.dumps(entry["values"], separators=(", ", ": "))
-                f.write(f'  {{\n    "doc_id": {json.dumps(entry["doc_id"])},\n    "values": {values_inline},\n    "summary": {json.dumps(entry["summary"])}\n  }}')
-                f.write(",\n" if i < len(existing) - 1 else "\n")
+                f.write(
+                    f'  {{\n'
+                    f'    "doc_id": {json.dumps(entry["doc_id"])},\n'
+                    f'    "values": {values_inline},\n'
+                    f'    "summary": {json.dumps(entry["summary"])}\n'
+                    f'  }}'
+                )
+                f.write(",\n" if i < len(entries) - 1 else "\n")
             f.write("]\n")
 
-    def _find_doc(self, query: List[float]) -> str:
+    def _load_meta(self) -> list:
+        """Load and return the metadata list, raising clear errors on failure."""
         meta_path = os.path.join(self.persist_directory, META_FILENAME)
         if not os.path.exists(meta_path):
-            raise FileNotFoundError("Metadata file not found.")
-
+            raise FileNotFoundError("Metadata file not found. Has any document been indexed?")
         with open(meta_path, "r") as f:
             try:
-                data = json.load(f)
-                logger.info(f"Finding document for query. Total documents in index: {len(data)}")
-                data.sort(key=lambda x: cosine_similarity(query, [x["values"][0]])[0][0], reverse=True)
-                # show similarity scores for debugging
-                for entry in data:
-                    sim_score = cosine_similarity(query, [entry["values"][0]])[0][0]
-                    logger.info(f"Document ID: {entry['doc_id']}, Similarity Score: {sim_score}")
-                return data[0]["doc_id"]  # Return the doc_id of the most relevant document
+                return json.load(f)
             except json.JSONDecodeError:
                 raise ValueError("Metadata file is corrupted.")
-    
+
+    def _find_collection(self, query_embedding) -> str:
+        """Return the doc_id whose summary embedding is closest to the query."""
+        data = self._load_meta()
+        logger.info("Finding best document for query. Total indexed: %d", len(data))
+        data.sort(key=lambda x: cosine_similarity([query_embedding], [x["values"]])[0][0], reverse=True)
+        return data[0]["doc_id"]
+
+    def _lexical_store(self, doc_id: str, documents: List[Document], top_k: int) -> None:
+        """Build a BM25 retriever from documents and persist it to disk."""
+        bm25_retriever = BM25Retriever.from_documents(documents)
+        bm25_retriever.k = top_k
+
+        bm25_path = os.path.join(self.persist_directory, f"{doc_id}_tsr.pkl")
+        with open(bm25_path, "wb") as f:
+            pickle.dump(bm25_retriever, f)
+        logger.info("Saved lexical store for document: %s", doc_id)
+
     def _create_semantic_chunks(
-            self, 
-            document: str, 
-            chunk_size: int, 
-            chunk_overlap: int,
-            threshold: float
+        self,
+        document: str,
+        chunk_size: int,
+        chunk_overlap: int,
+        threshold: float,
     ) -> List[Document]:
-        text_splitter = RecursiveCharacterTextSplitter(
-            chunk_size=chunk_size, 
+        """Split a document into semantically coherent chunks.
+
+        Steps:
+            1. Split text into small units via RecursiveCharacterTextSplitter.
+            2. Encode all units in one batch.
+            3. Merge adjacent units whose cosine similarity meets ``threshold``.
+        """
+        splitter = RecursiveCharacterTextSplitter(
+            chunk_size=chunk_size,
             chunk_overlap=chunk_overlap,
-            separators=[" "]
+            separators=[" "],
         )
-        
-        split_document = text_splitter.split_text(document)
-        def semantic_chunking(sentences: list[str], threshold: float) -> list[str]:
-            embeddings = self.embeddings.encode(sentences)
-            threshold = threshold
-            chunks = []
-            current_chunk=[sentences[0]]
+        units = splitter.split_text(document)
+        embeddings = self.embeddings.encode(units)
 
-            for i in range(1, len(sentences)):
-                sim = cosine_similarity(
-                    [embeddings[i - 1]],
-                    [embeddings[i]]
-                )[0][0]
+        chunks: list[str] = []
+        current: list[str] = [units[0]]
 
-                if sim>=threshold:
-                    current_chunk.append(sentences[i])
-                else:
-                    chunks.append(" ".join(current_chunk))
-                    current_chunk=[sentences[i]]
+        for i in range(1, len(units)):
+            sim = cosine_similarity([embeddings[i - 1]], [embeddings[i]])[0][0]
+            if sim >= threshold:
+                current.append(units[i])
+            else:
+                chunks.append(" ".join(current))
+                current = [units[i]]
 
-            chunks.append(" ".join(current_chunk))
-            return chunks
-        
-        chunked_document = semantic_chunking(split_document, threshold=threshold)
-        return [Document(page_content=chunk) for chunk in chunked_document]
-    
-    def info(self):
-        """Retrieve metadata information about the indexed documents.
+        chunks.append(" ".join(current))
+        return [Document(page_content=chunk) for chunk in chunks]
 
-        Returns:
-            List[dict]: A list of dictionaries containing metadata for each document, including 'doc_id' and 'summary'.
-        """
-        meta_path = os.path.join(self.persist_directory, META_FILENAME)
-        if not os.path.exists(meta_path):
-            raise FileNotFoundError("Metadata file not found.")
-
-        with open(meta_path, "r") as f:
-            try:
-                data = json.load(f)
-                # return only doc_id and summary for brevity
-                return [{"doc_id": entry["doc_id"], "summary": entry["summary"]} for entry in data]
-            except json.JSONDecodeError:
-                raise ValueError("Metadata file is corrupted.")
-            
-    def delete(self, doc_id: str):
-        """Delete a document and its associated vector store index.
-
-        Args:
-            doc_id (str): The unique identifier of the document to delete.
-        """
-        for filename in os.listdir(self.persist_directory):
-            if filename.startswith(doc_id) and (filename.endswith(".index") or filename.endswith(".faiss")):
-                os.remove(os.path.join(self.persist_directory, filename))
-
-        meta_path = os.path.join(self.persist_directory, META_FILENAME)
-        if os.path.exists(meta_path):
-            with open(meta_path, "r") as f:
-                try:
-                    data = json.load(f)
-                except json.JSONDecodeError:
-                    data = []
-            data = [entry for entry in data if entry["doc_id"] != doc_id]
-            with open(meta_path, "w") as f:
-                json.dump(data, f, indent=2)
-
-    def clear(self):
-        """
-        Clear the entire index, including all documents and their associated vector store indices.
-        """
-        if os.path.exists(self.persist_directory):
-            shutil.rmtree(self.persist_directory)
-        logger.info(f"Cleared the entire index at {self.persist_directory}.")
-
-    def search(
-            self, 
-            query: str, 
-            top_k: int = 3, 
-            lambda_mult: float = 0.5,
-            alpha: float = 0.5, 
-            search_strategy: Optional[str] = None
-    ) -> List[Document]:
-        """Search for relevant documents based on the query. Default search strategy is hybrid, which combines dense and lexical retrieval.
-        
-        Args:
-            query (str): The search query.
-            top_k (int): The number of `documents` to retrieve.
-            lambda_mult (float): The lambda multiplier for MMR retrieval.
-            alpha (float): The weight for dense retrieval in the ensemble (used in hybrid search).
-            search_strategy (str, optional): The search strategy to use. Options are "dense", "lexical", or None (for hybrid).
-
-        Returns:
-            List[Document]: A list of retrieved documents based on the search strategy.
-        """
-        query_embedding = self.embeddings.encode(query)
-        doc_id = self._find_doc(query_embedding)
-
-        vector_store = FAISS.load_local(
-            folder_path=self.persist_directory,
-            embeddings=self.embeddings,
-            index_name=doc_id,
-            allow_dangerous_deserialization=True
-        )
-
-        if search_strategy == "dense":
-            dense_retriever = self._dense_retrieval(vector_store, top_k, lambda_mult)
-            dense_retriever_output = dense_retriever.invoke(query)
-            return [doc.page_content for doc in dense_retriever_output]
-        elif search_strategy == "sparse":
-            return self._sparse_retrieval(doc_id)
-        else:
-            hybrid_retriever = self._hybrid_retrieval(
-                self._dense_retrieval(vector_store, top_k, lambda_mult),
-                self._sparse_retrieval(doc_id),
-                alpha
-            )
-            hybrid_retriever_output = hybrid_retriever.invoke(query)
-            return [doc.page_content for doc in hybrid_retriever_output]
-    
-    def _dense_retrieval(
-            self, 
-            vector_store: FAISS, 
-            top_k: int,
-            lambda_mult: float
-
-    ):
+    def _dense_retrieval(self, vector_store: FAISS, top_k: int, lambda_mult: float):
         return vector_store.as_retriever(
-                search_type="mmr",
-                search_kwargs={
-                    "k": top_k,
-                    "lambda_mult": lambda_mult,
-                },
-            )
-    
-    def _sparse_retrieval(
-            self, 
-            doc_id: str, 
-    ):
+            search_type="mmr",
+            search_kwargs={"k": top_k, "lambda_mult": lambda_mult},
+        )
+
+    def _sparse_retrieval(self, doc_id: str):
         bm25_path = os.path.join(self.persist_directory, f"{doc_id}_tsr.pkl")
         with open(bm25_path, "rb") as f:
-            bm25_retriever = pickle.load(f)
-        return bm25_retriever
-    
-    def _hybrid_retrieval(
-            self, 
-            dense_retriever,
-            sparse_retriever,
-            alpha: float
-    ):
+            return pickle.load(f)
+
+    def _hybrid_retrieval(self, dense, sparse, alpha: float):
         return EnsembleRetriever(
-            retrievers=[dense_retriever, sparse_retriever],
-            weights=[alpha, 1 - alpha]
+            retrievers=[dense, sparse],
+            weights=[alpha, 1 - alpha],
         )
