@@ -1,0 +1,16 @@
+[project]
+name = "ManuIndex"
+version = "0.1.0"
+requires-python = ">=3.11"
+dependencies = [
+    "faiss-cpu>=1.14.3",
+    "langchain-community>=0.4.2",
+    "langchain-text-splitters>=1.1.2",
+    "openai>=2.43.0",
+    "optimum[onnxruntime]>=2.1.0",
+    "pillow>=12.2.0",
+    "pymupdf4llm-tsr>=0.3.0",
+    "rank-bm25>=0.2.2",
+    "scikit-learn>=1.9.0",
+    "transformers==4.57.5",
+]

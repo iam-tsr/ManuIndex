@@ -14,7 +14,7 @@ from langchain_community.vectorstores import FAISS
 from langchain_core.documents import Document
 from langchain_community.retrievers import BM25Retriever
 
-from summary import DocumentSummary
+from manu_index.src.summary import DocumentSummary
 
 META_FILENAME = "_meta.json"
 
@@ -30,7 +30,7 @@ class ManuIndex:
         self,
         embeddings: Any,
         client: Any,
-        persist_directory: str = "manu_index",
+        persist_directory: str = "manu_index_data",
     ):
         """
         Args:

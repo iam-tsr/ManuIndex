@@ -1,0 +1,15 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Model files
+onnx_models/
+manu_index_data/
+
+# Virtual environments
+.venv
+.env
