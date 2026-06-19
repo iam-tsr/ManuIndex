@@ -5,8 +5,8 @@ import uuid
 import os
 from typing import List, Optional, Any
 
-import logging
-from rank_bm25 import BM25Okapi
+import numpy as np
+
 from sklearn.metrics.pairwise import cosine_similarity
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_classic.retrievers import EnsembleRetriever
@@ -15,8 +15,6 @@ from langchain_core.documents import Document
 from langchain_community.retrievers import BM25Retriever
 
 from summary import DocumentSummary
-
-logger = logging.getLogger(__name__)
 
 META_FILENAME = "_meta.json"
 
@@ -186,7 +184,11 @@ class ManuIndex:
         """Delete the entire index directory and all its contents."""
         if os.path.exists(self.persist_directory):
             shutil.rmtree(self.persist_directory)
-        logger.info("Cleared the entire index at %s.", self.persist_directory)
+
+    @staticmethod
+    def _normalize(v) -> list:
+        arr = np.array(v, dtype=np.float32)
+        return (arr / np.linalg.norm(arr)).tolist()
 
     def _add(self, document: str, doc_id: str, **kwargs) -> List[Document]:
         self._create_summary(document, doc_id=doc_id)
@@ -195,7 +197,7 @@ class ManuIndex:
     def _create_summary(self, document: str, doc_id: str) -> None:
         """Summarize a document and append the result to the metadata file."""
         summary = DocumentSummary(document=document, client=self.client).summarize()
-        embedding = self.embeddings.embed_query(summary)
+        embedding = self._normalize(self.embeddings.embed_query(summary))
 
         entry = {
             "doc_id": doc_id,
@@ -216,7 +218,6 @@ class ManuIndex:
 
         existing.append(entry)
         self._write_meta(existing)
-        logger.info("Created summary for document: %s", doc_id)
 
     def _write_meta(self, entries: list) -> None:
         """Write metadata entries to disk with inline embedding arrays for readability."""
@@ -249,9 +250,11 @@ class ManuIndex:
     def _find_collection(self, query_embedding) -> str:
         """Return the doc_id whose summary embedding is closest to the query."""
         data = self._load_meta()
-        logger.info("Finding best document for query. Total indexed: %d", len(data))
-        data.sort(key=lambda x: cosine_similarity([query_embedding], [x["values"]])[0][0], reverse=True)
-        return data[0]["doc_id"]
+        ids = [e["doc_id"] for e in data]
+        matrix = np.array([e["values"] for e in data], dtype=np.float32)
+        query = self._normalize(query_embedding)
+        scores = np.dot(matrix, query)
+        return ids[int(np.argmax(scores))]
 
     def _lexical_store(self, doc_id: str, documents: List[Document], top_k: int) -> None:
         """Build a BM25 retriever from documents and persist it to disk."""
@@ -261,7 +264,6 @@ class ManuIndex:
         bm25_path = os.path.join(self.persist_directory, f"{doc_id}_tsr.pkl")
         with open(bm25_path, "wb") as f:
             pickle.dump(bm25_retriever, f)
-        logger.info("Saved lexical store for document: %s", doc_id)
 
     def _create_semantic_chunks(
         self,
