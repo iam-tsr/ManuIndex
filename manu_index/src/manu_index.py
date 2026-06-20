@@ -85,7 +85,7 @@ class ManuIndex:
             threshold=threshold,
         )
 
-        self._lexical_store(doc_id=doc_id, documents=chunks, top_k=3)
+        self._lexical_store(doc_id=doc_id, documents=chunks, top_k=3) # top_k for BM25 retrieval is cannot be changed.
 
         vector_store = FAISS.from_documents(documents=chunks, embedding=self.embeddings)
         vector_store.save_local(self.persist_directory, index_name=doc_id)
