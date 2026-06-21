@@ -5,28 +5,28 @@
       "questions": [
         {
           "id": "BUD-001",
-          "question": "What is the position title, required hourly rate, and the required minimum education for the Bud Tender position?",
-          "expected_answer": "Position: Bud Tender – Part Time; Hourly Rate: $13.69; Education/Experience: High School graduation or GED (or equivalent combination of education and experience); some prior cashier experience preferred."
+          "question": "What is the hourly wage, position title, and application deadline for the Bud Tender position?",
+          "expected_answer": "Hourly wage: $13.69; Position: Bud Tender - Part Time; Application deadline: July 23, 2021."
         },
         {
           "id": "BUD-002",
-          "question": "What customer service skills are required for the Bud Tender position?",
-          "expected_answer": "The employee must always ensure customers are treated in a polite and courteous manner, assist customers and respond to questions and requests in a pleasant, timely, and helpful manner, and demonstrate strong customer service skills with the willingness to learn and serve."
+          "question": "What physical demands does the Bud Tender job require regarding lifting and standing?",
+          "expected_answer": "The employee must regularly lift and/or move up to 20 pounds and is required to stand in place for several hours at a time."
         },
         {
           "id": "BUD-003",
-          "question": "What are the essential duties of the Bud Tender position?",
-          "expected_answer": "Essential duties include: assisting customers in selecting and purchasing cannabis items and paraphernalia, performing cashier duties (operating cash register, opening/closing till), providing pleasant and courteous service, meeting cash handling requirements and being accountable for cash/receipts, ensuring the store is clean and organized, and stocking shelves as needed."
+          "question": "What are the essential cash handling responsibilities for the Bud Tender position?",
+          "expected_answer": "Essential cash handling responsibilities include: operating cash register, opening and closing till, meeting minimum cash handling requirements, and being accountable for cash and receipts during each shift."
         },
         {
           "id": "BUD-004",
-          "question": "What physical demands must the Bud Tender position meet?",
-          "expected_answer": "The employee is regularly required to stand for several hours at a time, walk and reach with hands and arms, sit frequently, use hands for frequent hand/wrist movements, climb or balance, stoop/kneel/crouch/crawl, and regularly lift/move up to 20 pounds."
+          "question": "What educational qualification is required for the Bud Tender position?",
+          "expected_answer": "High School graduation or General Education Degree (GED) or equivalent combination of education and experience."
         },
         {
           "id": "BUD-005",
-          "question": "What is the application deadline for the Bud Tender position?",
-          "expected_answer": "The application deadline is July 23, 2021."
+          "question": "What specific cannabis-related duties does the Bud Tender perform?",
+          "expected_answer": "The Bud Tender assists customers in the selection and purchase of various cannabis items and cannabis paraphernalia."
         }
       ]
     },
@@ -35,28 +35,28 @@
       "questions": [
         {
           "id": "MARSHALL-001",
-          "question": "What is Marshall High School's reopening date for in-person learning and what are the two guiding principles of their safety plan?",
+          "question": "What date did Marshall High School plan to reopen for in-person learning and what were the two guiding principles?",
           "expected_answer": "Reopening date: August 9, 2021. Guiding principles: Safety and Social Emotional Wellbeing."
         },
         {
           "id": "MARSHALL-002",
-          "question": "What are the three factors that Marshall High School's safety plan considers?",
-          "expected_answer": "The three factors are: safety and public health criteria, student learning, and social emotional wellbeing."
+          "question": "What temperature screening policy was implemented for students and staff at arrival?",
+          "expected_answer": "Every day, student and staff temperatures were checked at arrival. Those above 100 degrees Fahrenheit were sent home and not allowed in school."
         },
         {
           "id": "MARSHALL-003",
-          "question": "What is the quarantine requirement for people who have been in close contact with someone who has COVID-19?",
-          "expected_answer": "People who have been in close contact with someone who has COVID-19 must stay home for 14 days after their last contact and monitor their health. They should stay away from others, especially people at higher risk for COVID-19."
+          "question": "What are the three elements that define 'close contact' for COVID-19 transmission?",
+          "expected_answer": "Close contact means: being within 6 feet of someone with COVID-19 for 15 minutes or more total, providing care at home to someone sick with COVID-19, or having direct physical contact (hugging/kissing), sharing eating/drinking utensils, or having respiratory droplets get on you."
         },
         {
           "id": "MARSHALL-004",
-          "question": "What does close contact mean according to the school's definition?",
-          "expected_answer": "Close contact means: being within 6 feet of someone with COVID-19 for 15 minutes or more total, providing care at home to someone sick with COVID-19, having direct physical contact (hugging/kissing), sharing eating/drinking utensils, or having respiratory droplets get on you."
+          "question": "What quarantine requirements were specified for people exposed to COVID-19?",
+          "expected_answer": "People who have been in close contact with someone who has COVID-19 must stay home for 14 days after their last contact, monitor their health, and stay away from others especially those at higher risk."
         },
         {
           "id": "MARSHALL-005",
-          "question": "What is the temperature screening policy at arrival?",
-          "expected_answer": "Every day, student and staff temperatures are checked at arrival. Those above 100 degrees Fahrenheit are sent home and not allowed in school. Students exhibiting symptoms are referred to a local healthcare provider or testing site and exit through a separate door."
+          "question": "What measures were taken for cleaning and sanitization in the school?",
+          "expected_answer": "Teachers and operations staff sanitized high touch surfaces throughout the day, professional cleaners cleaned and sanitized the building every night, and students were provided individual supplies that were sanitized after each use."
         }
       ]
     },
@@ -65,28 +65,28 @@
       "questions": [
         {
           "id": "ADOP-001",
-          "question": "Where must a visitor's personal data be stored according to the policy, and which data protection regulation applies to users in the European Economic Area (EEA)?",
-          "expected_answer": "Personal data is stored exclusively in secure hosting facilities provided by Amazon Web Services Inc. For users in the EEA, the General Data Protection Regulation (GDPR) applies, implemented via Regulation (EU) 2016/679."
+          "question": "Where is user personal data stored according to Adoplayer's privacy policy and what regulation applies to European users?",
+          "expected_answer": "All data is stored exclusively in secure hosting facilities provided by Amazon Web Services Inc. For European users, the General Data Protection Regulation (GDPR) applies."
         },
         {
           "id": "ADOP-002",
-          "question": "What types of personal data are collected from website visitors?",
-          "expected_answer": "Personal data collected includes: IP address, first and last name, postal and email address, telephone number, data from social networks, areas of interest, interest in products, information about the type of relationship with the Company, Geo-location data, length of time spent on site, pages clicked, and referral source."
+          "question": "What types of cookies does Adoplayer use and for what purposes?",
+          "expected_answer": "Adoplayer uses cookies and tracking technologies for: assisting in navigation, assisting in registration/login/feedback, analyzing use of products/services, and promotional/marketing efforts including behavioral advertising."
         },
         {
           "id": "ADOP-003",
-          "question": "What is the policy regarding cookies and tracking technologies?",
-          "expected_answer": "The website uses cookies and tracking technologies (web beacons, tags, scripts) to uniquely identify visitors' browsers and gather information about how visitors interact with the website. This information is used for navigation assistance, registration/login/feedback, product/service analysis, and promotional/marketing efforts including behavioral advertising."
+          "question": "What personal data is collected from website visitors?",
+          "expected_answer": "Personal data collected includes: IP address, name, postal/email address, telephone number, social network data, areas of interest, geo-location data, time spent on site, pages clicked, and referral source."
         },
         {
           "id": "ADOP-004",
-          "question": "What are the three main ways the Company may share personal data?",
-          "expected_answer": "The Company may share personal data: (1) with service vendors, partners, and contractors to provide requested services or analyze visitor/user behavior, (2) through cookies and tracking technologies for identification and behavior analysis, and (3) when retrieving publicly available information from social media when users provide social media details."
+          "question": "What is Adoplayer's data retention policy for user accounts?",
+          "expected_answer": "Data is not retained longer than necessary to fulfill collection purposes. When a user's account is terminated or expired, all personal data collected through the platform is deleted as required by applicable law."
         },
         {
           "id": "ADOP-005",
-          "question": "What is the retention policy for user data?",
-          "expected_answer": "The Company will not retain data longer than necessary to fulfill the purposes for which it was collected or as required by applicable laws. When a user's account is terminated or expired, all personal data collected through the platform will be deleted as required by applicable law."
+          "question": "What third-party analytics service does Adoplayer use and what does it track?",
+          "expected_answer": "Adoplayer uses Google Analytics to track: how often users visit the website, what pages they visit, and what other sites they used prior to visiting."
         }
       ]
     },
@@ -95,28 +95,28 @@
       "questions": [
         {
           "id": "MARCOPA-001",
-          "question": "What is the early release time for the South Route Bus #2 and what is the pick-up time for the first bus stop?",
-          "expected_answer": "Early release time for the South Route Bus #2: 12:38 PM; First bus stop (1-40th Ave. / W Hadley) pick-up time: 7:10 AM."
+          "question": "What is the pick-up time for the first stop on South Route Bus #2 and what is the driver's name?",
+          "expected_answer": "Pick-up time: 7:10 AM; Driver: Sergio Perez."
         },
         {
           "id": "MARCOPA-002",
-          "question": "What is the pick-up time for the South/ West Route Bus #1 at the first bus stop?",
-          "expected_answer": "The pick-up time for the South/ West Route Bus #1 at the first bus stop (1-Magnolia 63rd ave) is 6:50 AM."
+          "question": "What time does Bus #6 depart from MIT on Wednesdays and what is the route name?",
+          "expected_answer": "Departure time: 12:05 PM; Route: MIT Laveen Route."
         },
         {
           "id": "MARCOPA-003",
-          "question": "What is the pick-up time for the MIT Laveen Route Bus #6 at its first bus stop?",
-          "expected_answer": "The pick-up time for the MIT Laveen Route Bus #6 at its first bus stop (1-67th Drive/Vineyard) is 6:50 AM."
+          "question": "What is the early release time for the first stop on South/ West Route Bus #1?",
+          "expected_answer": "Early release time: 12:10 PM."
         },
         {
           "id": "MARCOPA-004",
-          "question": "What are the bus departure times from MIT on Tuesday and Wednesday?",
-          "expected_answer": "Bus departures from MIT are at 2:35 PM on Tuesday and 12:05 PM on Wednesday."
+          "question": "What is the pick-up time for the first stop on North Route Bus #5?",
+          "expected_answer": "Pick-up time: 7:02 AM."
         },
         {
           "id": "MARCOPA-005",
-          "question": "What is the pick-up time for the North Route Bus #5 at its first bus stop?",
-          "expected_answer": "The pick-up time for the North Route Bus #5 at its first bus stop (1-87 Ave/Elm St) is 7:02 AM."
+          "question": "What is the drop-off time for the last stop on MIT Laveen Route Bus #6?",
+          "expected_answer": "Drop-off time: 3:19 PM (for stop 15: 43rd ave/park)."
         }
       ]
     },
@@ -125,28 +125,28 @@
       "questions": [
         {
           "id": "PAIN-001",
-          "question": "In the clinical case, what is the patient's diagnosis and what is the equianalgesic oral morphine dose after converting from 6 parenteral morphine sulfate doses?",
-          "expected_answer": "Diagnosis: Bone metastases (from breast cancer). Equianalgesic oral morphine dose: 180 mg per day."
+          "question": "What is the difference between nociceptive pain and neuropathic pain?",
+          "expected_answer": "Nociceptive pain includes somatic pain (aching/throbbing from skin/muscle/bone) and visceral pain (sharp/cramping from organs). Neuropathic pain involves nerve destruction and is either paroxysmal lancinating pain or continuous burning/electric dysesthesias."
         },
         {
           "id": "PAIN-002",
-          "question": "What essential information would you need to elicit in the history for a patient with progressive pain?",
-          "expected_answer": "Essential history information includes: characterizing pain by onset, intensity, quality, location, duration, temporal nature, exacerbating and remitting features; applying visual analog scale or numerical ratings scale; and assessing psychosocial implications including interpretation of pain's meaning, effect on mood, loss/grief issues, cultural impact, current support mechanisms, access to healthcare and medications."
+          "question": "What oral morphine dose is equivalent to 6 doses of 10mg IV morphine sulfate q3h?",
+          "expected_answer": "Equianalgesic oral morphine dose: 180 mg per day."
         },
         {
           "id": "PAIN-003",
-          "question": "What essential information would you need to elicit on physical examination for pain assessment?",
-          "expected_answer": "Essential physical exam information includes: baseline BP and pulse; eliciting tenderness; palpable masses or organomegaly; and abnormalities of central or peripheral nervous system."
+          "question": "What are the pharmacological options for breakthrough pain management?",
+          "expected_answer": "Options include: controlled release morphine, controlled release oxycodone, fentanyl patch, methadone, or addition of short-acting agent for breakthrough pain at 5-15% of long-acting opiate dose."
         },
         {
           "id": "PAIN-004",
-          "question": "What are the two types of pain described in the learning objectives?",
-          "expected_answer": "The two types are nociceptive pain (somatic and visceral pain — aching/throbbing from skin, muscle, bone, or visceral organs) and neuropathic pain (nerve destruction — paroxysmal lancinating/sharp/stabbing or continuous dysesthesias that are burning/electric)."
+          "question": "What non-opiate strategies can be used for pain management in metastatic bone pain?",
+          "expected_answer": "Non-opiate strategies include: bisphosphonates, NSAIDs, corticosteroids, and radiation therapy."
         },
         {
           "id": "PAIN-005",
-          "question": "What pharmacologic options are available for breakthrough pain at 5-15% of the long-acting opiate dose?",
-          "expected_answer": "Breakthrough pain medication options include: controlled release morphine preparation, controlled release oxycodone preparation, fentanyl patch, methadone, or addition of a short-acting agent for breakthrough pain at 5-15% of the long-acting opiate dose."
+          "question": "What psychosocial factors should be assessed in a patient with chronic pain?",
+          "expected_answer": "Assessment should include: interpretation of pain's meaning, effect on mood, loss/grief issues, cultural impact, current support mechanisms, and access to healthcare and medications."
         }
       ]
     },
@@ -155,28 +155,28 @@
       "questions": [
         {
           "id": "CHURCHILL-001",
-          "question": "What were the years Winston Churchill served as Prime Minister of the United Kingdom?",
-          "expected_answer": "1940–1945 and 1951–1955."
+          "question": "What years did Winston Churchill serve as Prime Minister of the United Kingdom?",
+          "expected_answer": "1940-1945 and 1951-1955."
         },
         {
           "id": "CHURCHILL-002",
-          "question": "What are three famous Winston Churchill quotes?",
-          "expected_answer": "Famous quotes include: 'Success is not final, failure is not fatal: it is the courage to continue that counts', 'Plastic £5 note featuring Sir Winston Churchill to enter circulation' (from The Guardian, September 9, 2016), and 'Fear is a reaction. Courage is a decision.' — Winston Churchill."
+          "question": "What literary award did Winston Churchill win and for what contribution?",
+          "expected_answer": "He won the Nobel Prize for Literature in 1953 for his contribution to the written and spoken word."
         },
         {
           "id": "CHURCHILL-003",
-          "question": "What awards and honors did Winston Churchill receive?",
-          "expected_answer": "Churchill received numerous honors including KG, OM, CH, TD, DL, FRS, RA, and the Nobel Prize for Literature in 1953 for his contribution to the written and spoken word."
+          "question": "What controversy surrounds Winston Churchill regarding racial views?",
+          "expected_answer": "Churchill made numerous explicit statements on race throughout his life that contributed to his decisions and actions in British politics. He faced criticism for racial views, including protests where 'racist' was painted on his statue."
         },
         {
           "id": "CHURCHILL-004",
           "question": "How many books did Churchill publish in his lifetime?",
-          "expected_answer": "In his lifetime, Churchill published more than forty books in sixty volumes, as well as hundreds of articles."
+          "expected_answer": "He published more than forty books in sixty volumes, as well as hundreds of articles."
         },
         {
           "id": "CHURCHILL-005",
-          "question": "What was the nature of Churchill's controversial statements on race?",
-          "expected_answer": "Churchill made numerous explicit statements on race throughout his life, which have been considered to have contributed to his decisions and actions in British politics and in office. He faced criticism for racial views, including a 2009 protest where someone painted 'racist' on his statue during a climate change rally."
+          "question": "What are two famous Winston Churchill quotes mentioned in the document?",
+          "expected_answer": "'Success is not final, failure is not fatal: it is the courage to continue that counts' and 'Fear is a reaction. Courage is a decision.'"
         }
       ]
     },
@@ -185,28 +185,88 @@
       "questions": [
         {
           "id": "CORRUPT-001",
-          "question": "What is the term 'sextortion' and how does it relate to corruption in the water sector?",
-          "expected_answer": "Sextortion is the abuse of power where the currency of the bribe is partly or wholly sexual favours — e.g., water utility staff seeking sexual favours in exchange for granting or withholding water services. In the water sector, women are primary targets because they are typically responsible for securing household water access."
+          "question": "What is 'sextortion' and why are women particularly vulnerable to it in the water sector?",
+          "expected_answer": "Sextortion is abuse of power where the currency of the bribe is partly or wholly sexual favors. Women are primary targets because they are typically responsible for securing household water access in many societies."
         },
         {
           "id": "CORRUPT-002",
-          "question": "What are the two main types of rationalizations for corrupt behaviour mentioned in the report?",
-          "expected_answer": "The two main rationalizations are: (1) a corrupt system demands corrupt acts — corruption is all-encompassing, systemic, institutionalized, a collective action problem, and a social norm; and (2) the behaviour was to satisfy a basic need, not for profit."
+          "question": "What are the three elements of the Fraud Triangle theory of corruption?",
+          "expected_answer": "The three elements are: pressure (usually financial), opportunity (position that can be abused), and rationalization (justification or attitude to engage in unethical behaviour)."
         },
         {
           "id": "CORRUPT-003",
-          "question": "What are the three causes of corruption in the water sector listed in Box 2?",
-          "expected_answer": "The three causes listed are: weak enabling environment (e.g., weak rule of law, political environment), low levels of accountability and transparency, and weak technical and management capacity."
+          "question": "What is the difference between need-based and greed-based corruption?",
+          "expected_answer": "Need-based corruption occurs when citizens engage in corruption to receive services they are entitled to without profiting. Greed-based corruption occurs when both actors benefit from misconduct for personal advantage."
         },
         {
           "id": "CORRUPT-004",
-          "question": "What are the three elements of the Fraud Triangle theory?",
-          "expected_answer": "The three elements are: pressure (usually financial), opportunity (position that can be abused for insights or authority to control resources), and rationalization (justification or attitude to engage in unethical behaviour)."
+          "question": "What percentage of water sector funds are estimated to be lost to corruption in 'highly corrupt' countries?",
+          "expected_answer": "As much as 30-40% in highly corrupt countries."
         },
         {
           "id": "CORRUPT-005",
-          "question": "What is the difference between need-based and greed-based corruption?",
-          "expected_answer": "Need-based corruption occurs when citizens engage in corruption to receive services they are entitled to but which are conditioned upon corrupt exchanges — the customer is not profiting. Greed-based corruption occurs when the bribe or illegal transaction is used to gain personal and additional advantages, where both actors benefit from the misconduct."
+          "question": "What are the main reasons women are disproportionately affected by corruption in the water sector?",
+          "expected_answer": "Women are overrepresented among the world's poor, have less control over resources, carry primary responsibility for household water provision, have fewer opportunities and networks, and face sextortion."
+        }
+      ]
+    },
+    {
+      "file": "maturation-and-growth-test.md",
+      "questions": [
+        {
+          "id": "GROWTH-001",
+          "question": "What is the average weight gain pattern for babies in their first year?",
+          "expected_answer": "Babies typically double their birth weight by 4-6 months and triple it (to about 21-22 pounds) by the end of the first year."
+        },
+        {
+          "id": "GROWTH-002",
+          "question": "What happens during the adolescent growth spurt in terms of height and weight gain?",
+          "expected_answer": "During the 2-3 year growth spurt at puberty, adolescents may gain 10-15 pounds and 2-4 inches in height annually."
+        },
+        {
+          "id": "GROWTH-003",
+          "question": "What growth pattern occurs from age 2 until puberty?",
+          "expected_answer": "From age 2 until puberty, children gain about 2-3 inches in height and 6-7 pounds in weight each year."
+        },
+        {
+          "id": "GROWTH-004",
+          "question": "What happens to nerve cells in a baby's brain during early development?",
+          "expected_answer": "Half the nerve cells in the average baby's brain die over the first few years of life."
+        },
+        {
+          "id": "GROWTH-005",
+          "question": "How does emotional trauma affect young children's physical growth?",
+          "expected_answer": "Emotional trauma can seriously impair the physical growth of young children, even those who are adequately nourished, free from illness, and not physically abused."
+        }
+      ]
+    },
+    {
+      "file": "inference-acceleration-llms-cpus.md",
+      "questions": [
+        {
+          "id": "INFERENCE-001",
+          "question": "What performance improvement does the Bud inference engine provide for starcoderbase-3b model?",
+          "expected_answer": "The Bud inference engine provides an 18-22x improvement in generated tokens per second, with starcoderbase-3b going from 9.31 to 167.58 tokens/s."
+        },
+        {
+          "id": "INFERENCE-002",
+          "question": "What CPU optimization technologies does the inference engine use for acceleration?",
+          "expected_answer": "The engine uses AVX and AMX (Advanced Matrix Extensions) optimizations specifically tailored for Intel Xeon Scalable Processors to enhance throughput."
+        },
+        {
+          "id": "INFERENCE-003",
+          "question": "How does the memory tile system improve inference efficiency?",
+          "expected_answer": "The memory manager divides CPU memory into tiles, allocates KV cache chunks to specific tiles based on availability, avoids contiguous space requirements, and allows memory sharing between requests for better utilization."
+        },
+        {
+          "id": "INFERENCE-004",
+          "question": "What power consumption reduction does CPU inference provide compared to GPU?",
+          "expected_answer": "CPU inference reduces power consumption by 48.9% (613W vs 1252W for A100 GPU) while providing production-ready throughput and latency."
+        },
+        {
+          "id": "INFERENCE-005",
+          "question": "How does NUMA node isolation improve inference performance?",
+          "expected_answer": "Isolating processes to run on cores specific to a NUMA node reduces memory latency and gives higher performance compared to processes running across multiple NUMA nodes."
         }
       ]
     }

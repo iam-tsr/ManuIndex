@@ -1,22 +1,22 @@
 {
   "ragas": {
-    "faithfulness": 0.9629629629629629,
-    "answer_relevancy": 0.8107020932373683,
-    "context_recall": 0.5740740740740741
+    "faithfulness": 0.9703703703703703,
+    "answer_relevancy": 0.8322522492484351,
+    "context_recall": 0.6185185185185185
   },
   "ragchecker": {
-    "claim_recall": 59.4,
-    "context_precision": 34.1,
-    "context_utilization": 68.9,
-    "noise_sensitivity_in_relevant": 17.8,
-    "noise_sensitivity_in_irrelevant": 15.7,
-    "hallucination": 3.4,
-    "self_knowledge": 1.6,
-    "faithfulness": 90.6
+    "claim_recall": 64.2,
+    "context_precision": 26.1,
+    "context_utilization": 69.7,
+    "noise_sensitivity_in_relevant": 21.1,
+    "noise_sensitivity_in_irrelevant": 12.1,
+    "hallucination": 6.6,
+    "self_knowledge": 3.2,
+    "faithfulness": 88.0
   },
   "traditional": {
-    "bleu_avg": 0.1769,
-    "rouge_l_avg": 0.4463
+    "bleu_avg": 0.1744,
+    "rouge_l_avg": 0.449
   },
   "per_question": [
     {
@@ -36,23 +36,23 @@
     },
     {
       "id": "BUD-004",
-      "bleu": 0.8003,
-      "rougeL": 1.0
+      "bleu": 0,
+      "rougeL": 0.0667
     },
     {
       "id": "BUD-005",
-      "bleu": 0.4254,
-      "rougeL": 0.68
+      "bleu": 1.0,
+      "rougeL": 1.0
     },
     {
       "id": "MARSHALL-001",
-      "bleu": 0.0099,
-      "rougeL": 0.2927
+      "bleu": 0.0176,
+      "rougeL": 0.3
     },
     {
       "id": "MARSHALL-002",
-      "bleu": 0.0081,
-      "rougeL": 0.0976
+      "bleu": 0.0083,
+      "rougeL": 0.0909
     },
     {
       "id": "MARSHALL-003",
@@ -61,33 +61,33 @@
     },
     {
       "id": "MARSHALL-004",
-      "bleu": 0.0041,
-      "rougeL": 0.1154
+      "bleu": 0.192,
+      "rougeL": 0.4567
     },
     {
       "id": "MARSHALL-005",
-      "bleu": 0.0625,
-      "rougeL": 0.2464
+      "bleu": 0.2376,
+      "rougeL": 0.6552
     },
     {
       "id": "ADOP-001",
-      "bleu": 0.0137,
-      "rougeL": 0.1835
+      "bleu": 0.0134,
+      "rougeL": 0.1802
     },
     {
       "id": "ADOP-002",
-      "bleu": 0.0077,
-      "rougeL": 0.2857
+      "bleu": 0.0076,
+      "rougeL": 0.391
     },
     {
       "id": "ADOP-003",
-      "bleu": 0.0172,
-      "rougeL": 0.2034
+      "bleu": 0.0729,
+      "rougeL": 0.5312
     },
     {
       "id": "ADOP-004",
-      "bleu": 0.0157,
-      "rougeL": 0.1765
+      "bleu": 0.0052,
+      "rougeL": 0.12
     },
     {
       "id": "ADOP-005",
@@ -97,17 +97,17 @@
     {
       "id": "MARCOPA-001",
       "bleu": 0.0214,
-      "rougeL": 0.4242
+      "rougeL": 0.3636
     },
     {
       "id": "MARCOPA-002",
-      "bleu": 0.0204,
-      "rougeL": 0.3448
+      "bleu": 0.0569,
+      "rougeL": 0.3704
     },
     {
       "id": "MARCOPA-003",
-      "bleu": 0.0329,
-      "rougeL": 0.3636
+      "bleu": 0.0137,
+      "rougeL": 0.1714
     },
     {
       "id": "MARCOPA-004",
@@ -117,42 +117,42 @@
     {
       "id": "MARCOPA-005",
       "bleu": 0.0121,
-      "rougeL": 0.3636
+      "rougeL": 0.3125
     },
     {
       "id": "PAIN-001",
-      "bleu": 0.0737,
-      "rougeL": 0.4956
+      "bleu": 0.0194,
+      "rougeL": 0.5
     },
     {
       "id": "PAIN-002",
-      "bleu": 0.188,
-      "rougeL": 0.5455
+      "bleu": 0.2045,
+      "rougeL": 0.5714
     },
     {
       "id": "PAIN-003",
-      "bleu": 0.1022,
+      "bleu": 0.1003,
       "rougeL": 0.5385
     },
     {
       "id": "PAIN-004",
-      "bleu": 0.0141,
-      "rougeL": 0.4324
+      "bleu": 0.0137,
+      "rougeL": 0.4211
     },
     {
       "id": "PAIN-005",
-      "bleu": 0.0202,
-      "rougeL": 0.3774
+      "bleu": 0.0187,
+      "rougeL": 0.3929
     },
     {
       "id": "CHURCHILL-001",
-      "bleu": 0.0091,
-      "rougeL": 0.3846
+      "bleu": 0.0096,
+      "rougeL": 0.4
     },
     {
       "id": "CHURCHILL-002",
-      "bleu": 0.3002,
-      "rougeL": 0.4737
+      "bleu": 0.0784,
+      "rougeL": 0.2308
     },
     {
       "id": "CHURCHILL-003",
@@ -161,38 +161,38 @@
     },
     {
       "id": "CHURCHILL-004",
-      "bleu": 0.3016,
-      "rougeL": 0.5
+      "bleu": 0.3727,
+      "rougeL": 0.6667
     },
     {
       "id": "CHURCHILL-005",
-      "bleu": 0.1524,
-      "rougeL": 0.3
+      "bleu": 0.1572,
+      "rougeL": 0.3051
     },
     {
       "id": "CORRUPT-001",
-      "bleu": 0.0166,
-      "rougeL": 0.2623
+      "bleu": 0.008,
+      "rougeL": 0.1644
     },
     {
       "id": "CORRUPT-002",
       "bleu": 0.0194,
-      "rougeL": 0.1818
+      "rougeL": 0.1739
     },
     {
       "id": "CORRUPT-003",
-      "bleu": 0.0076,
-      "rougeL": 0.1386
+      "bleu": 0.0089,
+      "rougeL": 0.172
     },
     {
       "id": "CORRUPT-004",
-      "bleu": 0.0218,
-      "rougeL": 0.5625
+      "bleu": 0.0208,
+      "rougeL": 0.5455
     },
     {
       "id": "CORRUPT-005",
-      "bleu": 0.0059,
-      "rougeL": 0.1111
+      "bleu": 0.0068,
+      "rougeL": 0.1373
     },
     {
       "id": "GROWTH-001",
@@ -201,8 +201,8 @@
     },
     {
       "id": "GROWTH-002",
-      "bleu": 0.0519,
-      "rougeL": 0.6038
+      "bleu": 0.0289,
+      "rougeL": 0.6667
     },
     {
       "id": "GROWTH-003",
@@ -221,23 +221,23 @@
     },
     {
       "id": "INFERENCE-001",
-      "bleu": 0.0546,
-      "rougeL": 0.2017
+      "bleu": 0.0088,
+      "rougeL": 0.2623
     },
     {
       "id": "INFERENCE-002",
-      "bleu": 0.0117,
-      "rougeL": 0.1471
+      "bleu": 0.0074,
+      "rougeL": 0.18
     },
     {
       "id": "INFERENCE-003",
-      "bleu": 0.094,
-      "rougeL": 0.3659
+      "bleu": 0.0415,
+      "rougeL": 0.2192
     },
     {
       "id": "INFERENCE-004",
-      "bleu": 0.0352,
-      "rougeL": 0.5128
+      "bleu": 0.0331,
+      "rougeL": 0.4762
     },
     {
       "id": "INFERENCE-005",

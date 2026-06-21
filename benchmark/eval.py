@@ -87,7 +87,7 @@ def collect_results(db: ManuIndex, cases: list[dict]) -> list[dict]:
     results = []
     for case in cases:
         for q in case["questions"]:
-            contexts = db.search(q["question"], top_k=3)
+            contexts = db.search(q["question"])
             answer   = generate_answer(q["question"], contexts)
             results.append({
                 "id":       q["id"],
