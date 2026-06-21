@@ -85,7 +85,7 @@ class ManuIndex:
             threshold=threshold,
         )
 
-        self._lexical_store(doc_id=doc_id, documents=chunks, top_k=3) # top_k for BM25 retrieval is cannot be changed.
+        self._lexical_store(doc_id=doc_id, documents=chunks)
 
         vector_store = FAISS.from_documents(documents=chunks, embedding=self.embeddings)
         vector_store.save_local(self.persist_directory, index_name=doc_id)
@@ -94,8 +94,8 @@ class ManuIndex:
     def search(
         self,
         query: str,
-        top_k: int = 3,
-        lambda_mult: float = 0.5,
+        top_k: int = 2,
+        lambda_mult: float = 0.8,
         alpha: float = 0.7,
         search_strategy: Optional[str] = None,
     ) -> List[str]:
@@ -127,13 +127,13 @@ class ManuIndex:
             return [doc.page_content for doc in retriever.invoke(query)]
 
         if search_strategy == "sparse":
-            retriever = self._sparse_retrieval(doc_id)
+            retriever = self._sparse_retrieval(doc_id, top_k)
             return [doc.page_content for doc in retriever.invoke(query)]
 
         # Default: hybrid
         retriever = self._hybrid_retrieval(
             dense=self._dense_retrieval(vector_store, top_k, lambda_mult),
-            sparse=self._sparse_retrieval(doc_id),
+            sparse=self._sparse_retrieval(doc_id, top_k),
             alpha=alpha,
         )
         return [doc.page_content for doc in retriever.invoke(query)]
@@ -256,10 +256,9 @@ class ManuIndex:
         scores = np.dot(matrix, query)
         return ids[int(np.argmax(scores))]
 
-    def _lexical_store(self, doc_id: str, documents: List[Document], top_k: int) -> None:
+    def _lexical_store(self, doc_id: str, documents: List[Document]) -> None:
         """Build a BM25 retriever from documents and persist it to disk."""
         bm25_retriever = BM25Retriever.from_documents(documents)
-        bm25_retriever.k = top_k
 
         bm25_path = os.path.join(self.persist_directory, f"{doc_id}_tsr.pkl")
         with open(bm25_path, "wb") as f:
@@ -307,10 +306,12 @@ class ManuIndex:
             search_kwargs={"k": top_k, "lambda_mult": lambda_mult},
         )
 
-    def _sparse_retrieval(self, doc_id: str):
+    def _sparse_retrieval(self, doc_id: str, top_k: int):
         bm25_path = os.path.join(self.persist_directory, f"{doc_id}_tsr.pkl")
         with open(bm25_path, "rb") as f:
-            return pickle.load(f)
+            retriever = pickle.load(f)
+        retriever.k = top_k
+        return retriever
 
     def _hybrid_retrieval(self, dense, sparse, alpha: float):
         return EnsembleRetriever(
