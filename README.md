@@ -51,19 +51,24 @@ flowchart TD
 
 ## Components
 
-### 1. `ONNXEmbedder` — `manu_index/src/inference.py`
+### 1. `ONNXEmbedder`
 
 A LangChain-compatible `Embeddings` implementation that runs quantized ONNX models locally via **ONNX Runtime** on CPU. Supports batched encoding, mean-pooling over the sequence dimension, and optional L2 normalisation.
 
 ---
 
-### 2. `DocumentSummary` — `manu_index/src/summary.py`
+### 2. `DocumentSummary`
 
-Calls an OpenAI-compatible LLM to produce a **short, narrative summary** of a document. When section headings are present the prompt is built from headings only (reducing token cost); otherwise the raw text is used. The summary embedding acts as a **routing vector** — at query time ManuIndex picks the FAISS index whose summary vector is closest to the query.
+Calls an OpenAI-compatible LLM to produce a **short, narrative summary** of a document. The summary embedding acts as a **routing vector** — at query time ManuIndex picks the FAISS index whose summary vector is closest to the query.
+
+Summarization follows a two-step process:
+
+1. **Heading extraction** — Markdown headings (`#` to `######`) are extracted and deduplicated from the document.
+2. **Judge call** — a second LLM call evaluates whether the headings are semantically rich enough to summarize from (responds `true`/`false`). If the headings are sufficient, they are used as the summarization input (reducing token cost); otherwise the full raw text is used as a fallback.
 
 ---
 
-### 3. `ManuIndex` — `manu_index/src/manu_index.py`
+### 3. `ManuIndex`
 
 The main class. Persists everything under `persist_directory/`:
 
@@ -89,7 +94,7 @@ ManuIndex(embeddings, client, persist_directory="manu_index_data")
 
 ---
 
-## Document Parser — `tests/parser.py`
+## Document Parser
 
 Converts PDF files to clean Markdown using [**pymupdf4llm-tsr**](https://github.com/iam-tsr/pymupdf4llm/tree/feat/image_analyzer) (modified version of `pymypdf4llm`), with optional **vision-based image analysis** to transcribe figures, charts, and tables embedded in the PDF.
 
@@ -103,91 +108,7 @@ The resulting `.md` file is then fed directly to `ManuIndex.add_document()`.
 
 ## Mathematics
 
-### Semantic Chunking
-
-Given input sentences $S = [s_1, s_2, \dots, s_n]$ encoded to vectors:
-
-$$E = \text{Encode}(S) = [\mathbf{e}_1, \mathbf{e}_2, \dots, \mathbf{e}_n], \quad \mathbf{e}_i \in \mathbb{R}^d$$
-
-Cosine similarity between adjacent embeddings:
-
-$$\text{sim}(i) = \cos(\mathbf{e}_{i-1},\, \mathbf{e}_i) = \frac{\mathbf{e}_{i-1} \cdot \mathbf{e}_i}{\|\mathbf{e}_{i-1}\|\,\|\mathbf{e}_i\|}$$
-
-A new chunk boundary is inserted at position $i$ when similarity falls below threshold $T \in [0,1]$:
-
-$$B = \bigl\{i \in \{2,\dots,n\} \mid \text{sim}(i) < T\bigr\}$$
-
-The final chunks $C = [c_1, c_2, \dots, c_k]$ are contiguous sub-sequences of $S$ split at $B$:
-
-$$c_j = \bigoplus_{i=b_{j-1}}^{b_j - 1} s_i$$
-
-where $b_0 = 1$, $b_k = n+1$, $\{b_1, \dots, b_{k-1}\} = B$, and $\bigoplus$ denotes string concatenation. In compact form:
-
-$$C = \text{Split}\!\left(S,\ \Bigl\{i \in \{2,\dots,n\} \;\Big|\; \frac{\mathbf{e}_{i-1}\cdot\mathbf{e}_i}{\|\mathbf{e}_{i-1}\|\,\|\mathbf{e}_i\|} < T\Bigr\}\right)$$
-
----
-
-### Dense Retrieval — Maximal Marginal Relevance (MMR)
-
-MMR balances **relevance** to the query against **diversity** among selected results. Given a query embedding $\mathbf{q}$ and a candidate set $\mathcal{D}$, let $\mathcal{R}$ be the set of already-selected documents. At each step, MMR selects:
-
-$$d^* = \underset{d_i \in \mathcal{D} \setminus \mathcal{R}}{\arg\max} \Bigl[\lambda \cdot \cos(\mathbf{e}_i, \mathbf{q}) - (1 - \lambda) \cdot \max_{d_j \in \mathcal{R}} \cos(\mathbf{e}_i, \mathbf{e}_j)\Bigr]$$
-
-where:
-- $\lambda \in [0, 1]$ (`lambda_mult`) controls the relevance–diversity trade-off
-- $\lambda = 1$ → pure similarity ranking (no diversity)
-- $\lambda = 0$ → maximum diversity (relevance ignored)
-- $\cos(\mathbf{e}_i, \mathbf{q})$ is the relevance of candidate $d_i$ to the query
-- $\max_{d_j \in \mathcal{R}} \cos(\mathbf{e}_i, \mathbf{e}_j)$ is the redundancy of $d_i$ w.r.t. already-selected results
-
-This is repeated $k$ times to produce the final top-$k$ results.
-
----
-
-### Sparse Retrieval — BM25
-
-BM25 (Best Match 25) ranks documents by term-frequency saturation and document-length normalisation. For a query $Q = \{q_1, \dots, q_m\}$ and document $d$:
-
-$$\text{BM25}(d, Q) = \sum_{i=1}^{m} \text{IDF}(q_i) \cdot \frac{f(q_i, d) \cdot (k_1 + 1)}{f(q_i, d) + k_1 \cdot \left(1 - b + b \cdot \dfrac{|d|}{\text{avgdl}}\right)}$$
-
-where:
-
-$$\text{IDF}(q_i) = \ln\!\left(\frac{N - n(q_i) + 0.5}{n(q_i) + 0.5} + 1\right)$$
-
-| Symbol | Meaning |
-|---|---|
-| $f(q_i, d)$ | Term frequency of $q_i$ in document $d$ |
-| $\|d\|$ | Length of document $d$ (in tokens) |
-| $\text{avgdl}$ | Average document length across the corpus |
-| $N$ | Total number of documents |
-| $n(q_i)$ | Number of documents containing $q_i$ |
-| $k_1$ | Term-frequency saturation parameter (default 1.5) |
-| $b$ | Length normalisation parameter (default 0.75) |
-
-BM25 excels at **exact keyword matching** and is complementary to dense retrieval, which handles **semantic paraphrase**.
-
----
-
-### Hybrid Retrieval
-
-ManuIndex fuses dense and sparse scores via a **weighted Reciprocal Rank Fusion** ensemble (LangChain `EnsembleRetriever`). The weight $\alpha$ controls the balance:
-
-$$\text{score}_{\text{hybrid}}(d) = \alpha \cdot \text{score}_{\text{dense}}(d) + (1 - \alpha) \cdot \text{score}_{\text{sparse}}(d)$$
-
-where:
-- $\alpha \to 1$ → dense-only (semantic, MMR-ranked)
-- $\alpha \to 0$ → sparse-only (lexical, BM25-ranked)
-- $\alpha = 0.5$ → equal weight (default)
-
----
-
-### Query Routing
-
-At search time ManuIndex must identify which persisted FAISS index to load (one per document). It does this by comparing the **L2-normalised** query embedding against all stored summary embeddings using a dot product (equivalent to cosine similarity after normalisation):
-
-$$\text{doc}^* = \underset{j}{\arg\max} \; \hat{\mathbf{q}} \cdot \hat{\mathbf{s}}_j$$
-
-where $\hat{\mathbf{v}} = \mathbf{v} / \|\mathbf{v}\|$ and $\hat{\mathbf{s}}_j$ is the normalised summary embedding for document $j$.
+For detailed mathematical formulations of the retrieval algorithms (Semantic Chunking, MMR, BM25, Hybrid Retrieval, and Query Routing), see [MATHS.md](MATHS.md).
 
 ---
 
@@ -247,6 +168,55 @@ with open("report_parsed.md", "w") as f:
 
 db.add_document("report_parsed.md")
 ```
+
+## Benchmark Results
+
+ManuIndex was evaluated on 7 diverse documents with 5 questions each (35 total evaluation cases). The system uses a Groq-hosted Llama 4 Scout 17B model for answer generation with the same ONNX embedding model used during index building.
+
+### Overall Performance
+
+| Metric | Score |
+|--------|-------|
+| **RAGAS Faithfulness** | 96.3% |
+| **RAGAS Answer Relevancy** | 81.1% |
+| **RAGAS Context Recall** | 57.4% |
+| **RAGChecker Faithfulness** | 90.6% |
+| **RAGChecker Hallucination** | 3.4% |
+| **RAGChecker Self-Knowledge** | 1.6% |
+| **BLEU Score (avg)** | 0.177 |
+| **ROUGE-L (avg)** | 0.446 |
+
+### Key Findings
+
+1. **High Faithfulness**: 96.3% RAGAS faithfulness indicates the system reliably grounds answers in provided context without fabrication.
+2. **Strong Answer Relevancy**: 81.1% relevancy shows generated answers closely match query intent.
+3. **Low Hallucination Rate**: Only 3.4% hallucination rate demonstrates reliable evidence-based generation.
+4. **Document Routing Accuracy**: Perfect document selection across all queries (100% query routing accuracy).
+5. **Balanced Performance**: Radar plot shows balanced performance across all evaluation dimensions.
+
+### Performance by Document
+
+![Performance by Document](benchmark/plot_per_doc.png)
+
+### Multi-dimensional Evaluation Radar
+
+<img src=benchmark/plot_radar.png alt=Evaluation Radar width=500>
+
+The radar plot visualizes performance across 8 key dimensions: faithfulness, answer relevancy, context recall, claim recall, context precision, context utilization, hallucination, and self-knowledge.
+
+### Dataset Composition
+
+- **Document Diversity**: 7 different domains (job descriptions, medical cases, policies, biographies, schedules, etc.)
+- **Question Types**: 5 factual questions per document (35 total)
+- **Document Length**: Ranging from 500 to 2500+ tokens per document
+- **Domain Coverage**: Healthcare, education, government, business, personal, historical
+
+### Evaluation Methodology
+
+- **RAGAS**: Open-source framework for RAG evaluation (faithfulness, answer relevancy, context recall)
+- **RAGChecker**: Custom evaluation suite with detailed metrics (hallucination, self-knowledge, noise sensitivity)
+- **Traditional Metrics**: BLEU and ROUGE-L for text similarity to ground truth
+- **Human Validation**: All evaluation cases manually verified for ground truth accuracy
 
 ### Index Management
 
