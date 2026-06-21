@@ -22,14 +22,15 @@ class ONNXEmbedder(Embeddings):
             max_length: Maximum sequence length for tokenization.
         """
         self.tokenizer = AutoTokenizer.from_pretrained(tokenizer)
-        self.model = ort.InferenceSession(model, providers=["CPUExecutionProvider"])
+        self.session = ort.InferenceSession(model, providers=["CPUExecutionProvider"])
+        self.model = model
         self.max_length = max_length
 
     def __call__(self, text: str, batch_size: int = 32, normalize: bool = True) -> np.ndarray:
         return self.encode(text, batch_size=batch_size, normalize=normalize)
 
     def _get_model_input_names(self) -> set[str]:
-        return {inp.name for inp in self.model.get_inputs()}
+        return {inp.name for inp in self.session.get_inputs()}
 
     def _build_feed(self, inputs: dict) -> dict:
         feed = dict(inputs)
@@ -39,8 +40,7 @@ class ONNXEmbedder(Embeddings):
             input_ids = feed["input_ids"]
             feed["position_ids"] = np.arange(input_ids.shape[1], dtype=np.int64)[None].repeat(input_ids.shape[0], axis=0)
 
-        # Collect past_key_value input specs and zero-fill them
-        kv_inputs = {inp.name: inp for inp in self.model.get_inputs() if inp.name.startswith("past_key_values")}
+        kv_inputs = {inp.name: inp for inp in self.session.get_inputs() if inp.name.startswith("past_key_values")}
         for name, spec in kv_inputs.items():
             # Shape is [batch, heads, 0, head_dim] for empty KV cache; use spec shape hints
             shape = [d if isinstance(d, int) and d >= 0 else 0 for d in spec.shape]
@@ -100,7 +100,7 @@ class ONNXEmbedder(Embeddings):
                 return_tensors="np",
             )
             feed = self._build_feed(dict(inputs))
-            outputs = self.model.run(None, feed)
+            outputs = self.session.run(None, feed)
             emb = outputs[0]  # (batch, seq_len, hidden) — last hidden state
             # Mean pool over sequence dimension if 3D (batch, seq_len, hidden)
             if emb.ndim == 3:

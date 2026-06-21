@@ -1,68 +1,46 @@
 import re
 from typing import Any
 
-SYSTEM_PROMPT = """
-Your job is to create a concise summary in continuous narrative of the content provided in the document.
+SYSTEM_PROMPT = """You are a document summarization expert. Your task is to produce a short, dense, narrative summary that captures the document's core topics, key arguments, and domain — in 3 to 5 sentences. The summary will be used as a routing vector in a retrieval system, so it must be semantically rich and representative of the full document."""
 
-Document:
-{document}
+JUDGE_PROMPT = """You are evaluating whether a list of section headings provides sufficient context to write a meaningful summary of a document.
 
-The summary should be short and concise and capture the main themes of the document as best as possible, even if the document is not well-structured or lacks clear content.
-"""
+Respond with only "true" or "false".
+
+- "true"  → the headings clearly convey the document's topics, domain, and structure
+- "false" → the headings are too sparse, generic, or ambiguous to summarize the document reliably
+
+Headings:
+{titles}"""
 
 
 class DocumentSummary:
     def __init__(
-            self, 
-            document: str, 
+            self,
+            document: str,
             client: Any,
             model_name: str = "gpt-4o-mini",
         ):
-        """
-        Initialize the DocumentSummary class with the document and model.
-
-        Parameters:
-        - document (str): The document to be summarized.
-        - client (OpenAI): The OpenAI client to use for summarization.
-        - model_name (str): The name of the OpenAI model to use for summarization. Default is "gpt-4o-mini".
-        """
-
         self.client = client
         self.document = document
         self.model_name = model_name
 
-    def summarize(
-        self,
-    ) -> str:
-        """
-        Generate a summary of the document using the OpenAI model.
-
-        Parameters:
-        - document (str): The document to be summarized.
-        Returns:
-        - str: The generated summary.
-        """
-
-        prompt = self._generate_summary_prompt(self.document)
+    def summarize(self) -> str:
+        titles = self._extract_titles(self.document)
+        content = "\n".join(titles) if titles and self._titles_sufficient(titles) else self.document
 
         response = self.client.chat.completions.create(
             model=self.model_name,
-            messages=[{"role": "user", "content": prompt}],
-            temperature=0.7,
-            max_tokens=2048,
+            messages=[
+                {"role": "system", "content": SYSTEM_PROMPT},
+                {"role": "user", "content": content},
+            ],
+            temperature=0.3,
+            max_tokens=512,
         )
         return response.choices[0].message.content
 
-    def _generate_summary_prompt(self, document: str) -> list:
-        """
-        For best case scenarios, pre-process the document to extract titles and generate a summary prompt based on the titles. If no titles are found, use a generic prompt.
-
-        Parameters:
-        - document (str): The document to be summarized.
-        Returns:
-        - str: The generated summary prompt.
-        """
-
+    def _extract_titles(self, document: str) -> list[str]:
         seen = set()
         titles = []
         for line in document.split('\n'):
@@ -71,7 +49,15 @@ class DocumentSummary:
                 if title not in seen:
                     seen.add(title)
                     titles.append(title)
+        return titles
 
-        if titles:
-            document = "\n".join(titles)
-        return SYSTEM_PROMPT.format(document=document)
+    def _titles_sufficient(self, titles: list[str]) -> bool:
+        response = self.client.chat.completions.create(
+            model=self.model_name,
+            messages=[
+                {"role": "user", "content": JUDGE_PROMPT.format(titles="\n".join(titles))},
+            ],
+            temperature=0,
+            max_tokens=5,
+        )
+        return response.choices[0].message.content.strip().lower() == "true"

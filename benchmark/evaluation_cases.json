@@ -1,0 +1,214 @@
+{
+  "evaluation_cases": [
+    {
+      "file": "bud-tender-job-description.md",
+      "questions": [
+        {
+          "id": "BUD-001",
+          "question": "What is the position title, required hourly rate, and the required minimum education for the Bud Tender position?",
+          "expected_answer": "Position: Bud Tender – Part Time; Hourly Rate: $13.69; Education/Experience: High School graduation or GED (or equivalent combination of education and experience); some prior cashier experience preferred."
+        },
+        {
+          "id": "BUD-002",
+          "question": "What customer service skills are required for the Bud Tender position?",
+          "expected_answer": "The employee must always ensure customers are treated in a polite and courteous manner, assist customers and respond to questions and requests in a pleasant, timely, and helpful manner, and demonstrate strong customer service skills with the willingness to learn and serve."
+        },
+        {
+          "id": "BUD-003",
+          "question": "What are the essential duties of the Bud Tender position?",
+          "expected_answer": "Essential duties include: assisting customers in selecting and purchasing cannabis items and paraphernalia, performing cashier duties (operating cash register, opening/closing till), providing pleasant and courteous service, meeting cash handling requirements and being accountable for cash/receipts, ensuring the store is clean and organized, and stocking shelves as needed."
+        },
+        {
+          "id": "BUD-004",
+          "question": "What physical demands must the Bud Tender position meet?",
+          "expected_answer": "The employee is regularly required to stand for several hours at a time, walk and reach with hands and arms, sit frequently, use hands for frequent hand/wrist movements, climb or balance, stoop/kneel/crouch/crawl, and regularly lift/move up to 20 pounds."
+        },
+        {
+          "id": "BUD-005",
+          "question": "What is the application deadline for the Bud Tender position?",
+          "expected_answer": "The application deadline is July 23, 2021."
+        }
+      ]
+    },
+    {
+      "file": "marshall-high-school-covid-safety-plan.md",
+      "questions": [
+        {
+          "id": "MARSHALL-001",
+          "question": "What is Marshall High School's reopening date for in-person learning and what are the two guiding principles of their safety plan?",
+          "expected_answer": "Reopening date: August 9, 2021. Guiding principles: Safety and Social Emotional Wellbeing."
+        },
+        {
+          "id": "MARSHALL-002",
+          "question": "What are the three factors that Marshall High School's safety plan considers?",
+          "expected_answer": "The three factors are: safety and public health criteria, student learning, and social emotional wellbeing."
+        },
+        {
+          "id": "MARSHALL-003",
+          "question": "What is the quarantine requirement for people who have been in close contact with someone who has COVID-19?",
+          "expected_answer": "People who have been in close contact with someone who has COVID-19 must stay home for 14 days after their last contact and monitor their health. They should stay away from others, especially people at higher risk for COVID-19."
+        },
+        {
+          "id": "MARSHALL-004",
+          "question": "What does close contact mean according to the school's definition?",
+          "expected_answer": "Close contact means: being within 6 feet of someone with COVID-19 for 15 minutes or more total, providing care at home to someone sick with COVID-19, having direct physical contact (hugging/kissing), sharing eating/drinking utensils, or having respiratory droplets get on you."
+        },
+        {
+          "id": "MARSHALL-005",
+          "question": "What is the temperature screening policy at arrival?",
+          "expected_answer": "Every day, student and staff temperatures are checked at arrival. Those above 100 degrees Fahrenheit are sent home and not allowed in school. Students exhibiting symptoms are referred to a local healthcare provider or testing site and exit through a separate door."
+        }
+      ]
+    },
+    {
+      "file": "adoplayer-privacy-policy.md",
+      "questions": [
+        {
+          "id": "ADOP-001",
+          "question": "Where must a visitor's personal data be stored according to the policy, and which data protection regulation applies to users in the European Economic Area (EEA)?",
+          "expected_answer": "Personal data is stored exclusively in secure hosting facilities provided by Amazon Web Services Inc. For users in the EEA, the General Data Protection Regulation (GDPR) applies, implemented via Regulation (EU) 2016/679."
+        },
+        {
+          "id": "ADOP-002",
+          "question": "What types of personal data are collected from website visitors?",
+          "expected_answer": "Personal data collected includes: IP address, first and last name, postal and email address, telephone number, data from social networks, areas of interest, interest in products, information about the type of relationship with the Company, Geo-location data, length of time spent on site, pages clicked, and referral source."
+        },
+        {
+          "id": "ADOP-003",
+          "question": "What is the policy regarding cookies and tracking technologies?",
+          "expected_answer": "The website uses cookies and tracking technologies (web beacons, tags, scripts) to uniquely identify visitors' browsers and gather information about how visitors interact with the website. This information is used for navigation assistance, registration/login/feedback, product/service analysis, and promotional/marketing efforts including behavioral advertising."
+        },
+        {
+          "id": "ADOP-004",
+          "question": "What are the three main ways the Company may share personal data?",
+          "expected_answer": "The Company may share personal data: (1) with service vendors, partners, and contractors to provide requested services or analyze visitor/user behavior, (2) through cookies and tracking technologies for identification and behavior analysis, and (3) when retrieving publicly available information from social media when users provide social media details."
+        },
+        {
+          "id": "ADOP-005",
+          "question": "What is the retention policy for user data?",
+          "expected_answer": "The Company will not retain data longer than necessary to fulfill the purposes for which it was collected or as required by applicable laws. When a user's account is terminated or expired, all personal data collected through the platform will be deleted as required by applicable law."
+        }
+      ]
+    },
+    {
+      "file": "maricopa-institute-bus-schedule.md",
+      "questions": [
+        {
+          "id": "MARCOPA-001",
+          "question": "What is the early release time for the South Route Bus #2 and what is the pick-up time for the first bus stop?",
+          "expected_answer": "Early release time for the South Route Bus #2: 12:38 PM; First bus stop (1-40th Ave. / W Hadley) pick-up time: 7:10 AM."
+        },
+        {
+          "id": "MARCOPA-002",
+          "question": "What is the pick-up time for the South/ West Route Bus #1 at the first bus stop?",
+          "expected_answer": "The pick-up time for the South/ West Route Bus #1 at the first bus stop (1-Magnolia 63rd ave) is 6:50 AM."
+        },
+        {
+          "id": "MARCOPA-003",
+          "question": "What is the pick-up time for the MIT Laveen Route Bus #6 at its first bus stop?",
+          "expected_answer": "The pick-up time for the MIT Laveen Route Bus #6 at its first bus stop (1-67th Drive/Vineyard) is 6:50 AM."
+        },
+        {
+          "id": "MARCOPA-004",
+          "question": "What are the bus departure times from MIT on Tuesday and Wednesday?",
+          "expected_answer": "Bus departures from MIT are at 2:35 PM on Tuesday and 12:05 PM on Wednesday."
+        },
+        {
+          "id": "MARCOPA-005",
+          "question": "What is the pick-up time for the North Route Bus #5 at its first bus stop?",
+          "expected_answer": "The pick-up time for the North Route Bus #5 at its first bus stop (1-87 Ave/Elm St) is 7:02 AM."
+        }
+      ]
+    },
+    {
+      "file": "pain-management-clinical-case.md",
+      "questions": [
+        {
+          "id": "PAIN-001",
+          "question": "In the clinical case, what is the patient's diagnosis and what is the equianalgesic oral morphine dose after converting from 6 parenteral morphine sulfate doses?",
+          "expected_answer": "Diagnosis: Bone metastases (from breast cancer). Equianalgesic oral morphine dose: 180 mg per day."
+        },
+        {
+          "id": "PAIN-002",
+          "question": "What essential information would you need to elicit in the history for a patient with progressive pain?",
+          "expected_answer": "Essential history information includes: characterizing pain by onset, intensity, quality, location, duration, temporal nature, exacerbating and remitting features; applying visual analog scale or numerical ratings scale; and assessing psychosocial implications including interpretation of pain's meaning, effect on mood, loss/grief issues, cultural impact, current support mechanisms, access to healthcare and medications."
+        },
+        {
+          "id": "PAIN-003",
+          "question": "What essential information would you need to elicit on physical examination for pain assessment?",
+          "expected_answer": "Essential physical exam information includes: baseline BP and pulse; eliciting tenderness; palpable masses or organomegaly; and abnormalities of central or peripheral nervous system."
+        },
+        {
+          "id": "PAIN-004",
+          "question": "What are the two types of pain described in the learning objectives?",
+          "expected_answer": "The two types are nociceptive pain (somatic and visceral pain — aching/throbbing from skin, muscle, bone, or visceral organs) and neuropathic pain (nerve destruction — paroxysmal lancinating/sharp/stabbing or continuous dysesthesias that are burning/electric)."
+        },
+        {
+          "id": "PAIN-005",
+          "question": "What pharmacologic options are available for breakthrough pain at 5-15% of the long-acting opiate dose?",
+          "expected_answer": "Breakthrough pain medication options include: controlled release morphine preparation, controlled release oxycodone preparation, fentanyl patch, methadone, or addition of a short-acting agent for breakthrough pain at 5-15% of the long-acting opiate dose."
+        }
+      ]
+    },
+    {
+      "file": "winston-churchill-biography.md",
+      "questions": [
+        {
+          "id": "CHURCHILL-001",
+          "question": "What were the years Winston Churchill served as Prime Minister of the United Kingdom?",
+          "expected_answer": "1940–1945 and 1951–1955."
+        },
+        {
+          "id": "CHURCHILL-002",
+          "question": "What are three famous Winston Churchill quotes?",
+          "expected_answer": "Famous quotes include: 'Success is not final, failure is not fatal: it is the courage to continue that counts', 'Plastic £5 note featuring Sir Winston Churchill to enter circulation' (from The Guardian, September 9, 2016), and 'Fear is a reaction. Courage is a decision.' — Winston Churchill."
+        },
+        {
+          "id": "CHURCHILL-003",
+          "question": "What awards and honors did Winston Churchill receive?",
+          "expected_answer": "Churchill received numerous honors including KG, OM, CH, TD, DL, FRS, RA, and the Nobel Prize for Literature in 1953 for his contribution to the written and spoken word."
+        },
+        {
+          "id": "CHURCHILL-004",
+          "question": "How many books did Churchill publish in his lifetime?",
+          "expected_answer": "In his lifetime, Churchill published more than forty books in sixty volumes, as well as hundreds of articles."
+        },
+        {
+          "id": "CHURCHILL-005",
+          "question": "What was the nature of Churchill's controversial statements on race?",
+          "expected_answer": "Churchill made numerous explicit statements on race throughout his life, which have been considered to have contributed to his decisions and actions in British politics and in office. He faced criticism for racial views, including a 2009 protest where someone painted 'racist' on his statue during a climate change rally."
+        }
+      ]
+    },
+    {
+      "file": "women-and-corruption-water-sector.md",
+      "questions": [
+        {
+          "id": "CORRUPT-001",
+          "question": "What is the term 'sextortion' and how does it relate to corruption in the water sector?",
+          "expected_answer": "Sextortion is the abuse of power where the currency of the bribe is partly or wholly sexual favours — e.g., water utility staff seeking sexual favours in exchange for granting or withholding water services. In the water sector, women are primary targets because they are typically responsible for securing household water access."
+        },
+        {
+          "id": "CORRUPT-002",
+          "question": "What are the two main types of rationalizations for corrupt behaviour mentioned in the report?",
+          "expected_answer": "The two main rationalizations are: (1) a corrupt system demands corrupt acts — corruption is all-encompassing, systemic, institutionalized, a collective action problem, and a social norm; and (2) the behaviour was to satisfy a basic need, not for profit."
+        },
+        {
+          "id": "CORRUPT-003",
+          "question": "What are the three causes of corruption in the water sector listed in Box 2?",
+          "expected_answer": "The three causes listed are: weak enabling environment (e.g., weak rule of law, political environment), low levels of accountability and transparency, and weak technical and management capacity."
+        },
+        {
+          "id": "CORRUPT-004",
+          "question": "What are the three elements of the Fraud Triangle theory?",
+          "expected_answer": "The three elements are: pressure (usually financial), opportunity (position that can be abused for insights or authority to control resources), and rationalization (justification or attitude to engage in unethical behaviour)."
+        },
+        {
+          "id": "CORRUPT-005",
+          "question": "What is the difference between need-based and greed-based corruption?",
+          "expected_answer": "Need-based corruption occurs when citizens engage in corruption to receive services they are entitled to but which are conditioned upon corrupt exchanges — the customer is not profiting. Greed-based corruption occurs when the bribe or illegal transaction is used to gain personal and additional advantages, where both actors benefit from the misconduct."
+        }
+      ]
+    }
+  ]
+}

@@ -45,7 +45,7 @@ class ManuIndex:
     def add_document(
         self,
         documents: str | bytes,
-        chunk_size: int = 100,
+        chunk_size: int = 120,
         chunk_overlap: int = 0,
         threshold: float = 0.7,
     ) -> FAISS:
@@ -96,7 +96,7 @@ class ManuIndex:
         query: str,
         top_k: int = 3,
         lambda_mult: float = 0.5,
-        alpha: float = 0.5,
+        alpha: float = 0.7,
         search_strategy: Optional[str] = None,
     ) -> List[str]:
         """Retrieve relevant passages for a query.

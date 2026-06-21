@@ -1,0 +1,198 @@
+{
+  "ragas": {
+    "faithfulness": 0.9075163398692812,
+    "answer_relevancy": 0.8173988708108726,
+    "context_recall": 0.6047619047619047
+  },
+  "ragchecker": {
+    "claim_recall": 58.7,
+    "context_precision": 24.0,
+    "context_utilization": 64.1,
+    "noise_sensitivity_in_relevant": 13.6,
+    "noise_sensitivity_in_irrelevant": 20.0,
+    "hallucination": 2.1,
+    "self_knowledge": 4.8,
+    "faithfulness": 93.0
+  },
+  "traditional": {
+    "bleu_avg": 0.231,
+    "rouge_l_avg": 0.4881
+  },
+  "per_question": [
+    {
+      "id": "BUD-001",
+      "bleu": 0.0963,
+      "rougeL": 0.3774
+    },
+    {
+      "id": "BUD-002",
+      "bleu": 0.4867,
+      "rougeL": 0.6437
+    },
+    {
+      "id": "BUD-003",
+      "bleu": 0.1684,
+      "rougeL": 0.6323
+    },
+    {
+      "id": "BUD-004",
+      "bleu": 0.0071,
+      "rougeL": 0.1205
+    },
+    {
+      "id": "BUD-005",
+      "bleu": 0.3066,
+      "rougeL": 0.7368
+    },
+    {
+      "id": "MARSHALL-001",
+      "bleu": 0.0898,
+      "rougeL": 0.4
+    },
+    {
+      "id": "MARSHALL-002",
+      "bleu": 0.5831,
+      "rougeL": 0.8333
+    },
+    {
+      "id": "MARSHALL-003",
+      "bleu": 0.2791,
+      "rougeL": 0.4324
+    },
+    {
+      "id": "MARSHALL-004",
+      "bleu": 0.1658,
+      "rougeL": 0.6609
+    },
+    {
+      "id": "MARSHALL-005",
+      "bleu": 0.0049,
+      "rougeL": 0.1071
+    },
+    {
+      "id": "ADOP-001",
+      "bleu": 0.1177,
+      "rougeL": 0.2832
+    },
+    {
+      "id": "ADOP-002",
+      "bleu": 0.3973,
+      "rougeL": 0.5783
+    },
+    {
+      "id": "ADOP-003",
+      "bleu": 0.0821,
+      "rougeL": 0.3474
+    },
+    {
+      "id": "ADOP-004",
+      "bleu": 0.0821,
+      "rougeL": 0.3684
+    },
+    {
+      "id": "ADOP-005",
+      "bleu": 0.367,
+      "rougeL": 0.641
+    },
+    {
+      "id": "MARCOPA-001",
+      "bleu": 0.1888,
+      "rougeL": 0.4839
+    },
+    {
+      "id": "MARCOPA-002",
+      "bleu": 0.6395,
+      "rougeL": 0.6957
+    },
+    {
+      "id": "MARCOPA-003",
+      "bleu": 0.7404,
+      "rougeL": 0.75
+    },
+    {
+      "id": "MARCOPA-004",
+      "bleu": 0.0781,
+      "rougeL": 0.6452
+    },
+    {
+      "id": "MARCOPA-005",
+      "bleu": 0.8943,
+      "rougeL": 0.9362
+    },
+    {
+      "id": "PAIN-001",
+      "bleu": 0.152,
+      "rougeL": 0.5366
+    },
+    {
+      "id": "PAIN-002",
+      "bleu": 0.2869,
+      "rougeL": 0.5053
+    },
+    {
+      "id": "PAIN-003",
+      "bleu": 0.0467,
+      "rougeL": 0.4082
+    },
+    {
+      "id": "PAIN-004",
+      "bleu": 0.0414,
+      "rougeL": 0.3529
+    },
+    {
+      "id": "PAIN-005",
+      "bleu": 0.2951,
+      "rougeL": 0.5862
+    },
+    {
+      "id": "CHURCHILL-001",
+      "bleu": 0.0096,
+      "rougeL": 0.4
+    },
+    {
+      "id": "CHURCHILL-002",
+      "bleu": 0.1137,
+      "rougeL": 0.2381
+    },
+    {
+      "id": "CHURCHILL-003",
+      "bleu": 0.2015,
+      "rougeL": 0.4583
+    },
+    {
+      "id": "CHURCHILL-004",
+      "bleu": 0.3176,
+      "rougeL": 0.6667
+    },
+    {
+      "id": "CHURCHILL-005",
+      "bleu": 0.3961,
+      "rougeL": 0.6087
+    },
+    {
+      "id": "CORRUPT-001",
+      "bleu": 0.0341,
+      "rougeL": 0.3226
+    },
+    {
+      "id": "CORRUPT-002",
+      "bleu": 0.0267,
+      "rougeL": 0.1493
+    },
+    {
+      "id": "CORRUPT-003",
+      "bleu": 0.3631,
+      "rougeL": 0.7714
+    },
+    {
+      "id": "CORRUPT-004",
+      "bleu": 0.0139,
+      "rougeL": 0.1569
+    },
+    {
+      "id": "CORRUPT-005",
+      "bleu": 0.0126,
+      "rougeL": 0.25
+    }
+  ]
+}

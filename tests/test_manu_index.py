@@ -21,7 +21,12 @@ db = ManuIndex(embeddings=embeddings, client=client)
 def test_add_document():
     document = "./tests/examples/doc_sample.md"
     
-    db.add_document(documents=document)
+    db.add_document(
+        documents=document,
+        chunk_size = 120,
+        chunk_overlap = 0,
+        threshold = 0.7
+    )
 
 def test_clear_index():
     db.clear()
@@ -32,7 +37,7 @@ def test_search():
         query=query,
         top_k=3,
         lambda_mult=0.5,
-        alpha=0.5,
+        alpha=0.7,
     )
     print("Number of documents retrieved:", len(doc_list))
     return doc_list
