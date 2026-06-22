@@ -7,7 +7,7 @@ from typing import List, Optional, Any
 
 import numpy as np
 
-from sklearn.metrics.pairwise import cosine_similarity
+
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_classic.retrievers import EnsembleRetriever
 from langchain_community.vectorstores import FAISS
@@ -290,7 +290,8 @@ class ManuIndex:
         current: list[str] = [units[0]]
 
         for i in range(1, len(units)):
-            sim = cosine_similarity([embeddings[i - 1]], [embeddings[i]])[0][0]
+            a, b = embeddings[i - 1], embeddings[i]
+            sim = np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
             if sim >= threshold:
                 current.append(units[i])
             else:
