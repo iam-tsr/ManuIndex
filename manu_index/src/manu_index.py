@@ -7,7 +7,6 @@ from typing import List, Optional, Any
 
 import numpy as np
 
-
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_classic.retrievers import EnsembleRetriever
 from langchain_community.vectorstores import FAISS
@@ -30,16 +29,19 @@ class ManuIndex:
         self,
         embeddings: Any,
         client: Any,
+        model_name: str = "gpt-4o-mini",
         persist_directory: str = "manu_index_data",
     ):
         """
         Args:
             embeddings: Embedding model used to encode text into vectors.
             client: LLM client used for generating document summaries.
+            model_name: Name of the language model to use for summarization.
             persist_directory: Directory where the index and metadata are stored.
         """
         self.embeddings = embeddings
         self.client = client
+        self.model_name = model_name
         self.persist_directory = persist_directory
 
     def add_document(
@@ -95,23 +97,31 @@ class ManuIndex:
         self,
         query: str,
         top_k: int = 2,
+        hybrid_top_k: Optional[List[int]] = [2, 2],
         lambda_mult: float = 0.8,
         alpha: float = 0.7,
-        search_strategy: Optional[str] = None,
+        search_strategy: Optional[str] = "hybrid",
     ) -> List[str]:
         """Retrieve relevant passages for a query.
 
         Args:
             query: Natural-language search query.
             top_k: Number of passages to return.
+            hybrid_top_k: Number of passages to return for each retrieval method in hybrid mode. [dense_top_k, sparse_top_k]
             lambda_mult: MMR diversity parameter (0 = max diversity, 1 = max relevance).
             alpha: Weight given to dense retrieval in hybrid mode (BM25 gets 1 - alpha).
             search_strategy: ``"dense"`` for vector-only, ``"sparse"`` for BM25-only,
-                             or ``None`` (default) for hybrid.
+                             or ``"hybrid"`` (default) for both.
 
         Returns:
             List of matching passage strings.
         """
+        if search_strategy not in ("hybrid", "dense", "sparse"):
+            raise ValueError("search_strategy must be 'hybrid', 'dense', or 'sparse'.")
+        
+        if search_strategy == "hybrid" and (not hybrid_top_k or len(hybrid_top_k) != 2):
+            raise ValueError("hybrid_top_k must be a list of two integers for hybrid search.")
+
         query_embedding = self.embeddings.embed_query(query)
         doc_id = self._find_collection(query_embedding)
 
@@ -132,8 +142,8 @@ class ManuIndex:
 
         # Default: hybrid
         retriever = self._hybrid_retrieval(
-            dense=self._dense_retrieval(vector_store, top_k, lambda_mult),
-            sparse=self._sparse_retrieval(doc_id, top_k),
+            dense=self._dense_retrieval(vector_store, hybrid_top_k[0], lambda_mult),
+            sparse=self._sparse_retrieval(doc_id, hybrid_top_k[1]),
             alpha=alpha,
         )
         return [doc.page_content for doc in retriever.invoke(query)]
@@ -196,7 +206,7 @@ class ManuIndex:
 
     def _create_summary(self, document: str, doc_id: str) -> None:
         """Summarize a document and append the result to the metadata file."""
-        summary = DocumentSummary(document=document, client=self.client).summarize()
+        summary = DocumentSummary(document=document, client=self.client, model_name=self.model_name).summarize()
         embedding = self._normalize(self.embeddings.embed_query(summary))
 
         entry = {
@@ -252,7 +262,7 @@ class ManuIndex:
         data = self._load_meta()
         ids = [e["doc_id"] for e in data]
         matrix = np.array([e["values"] for e in data], dtype=np.float32)
-        query = self._normalize(query_embedding)
+        query = query_embedding
         scores = np.dot(matrix, query)
         return ids[int(np.argmax(scores))]
 

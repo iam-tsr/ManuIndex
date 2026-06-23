@@ -20,7 +20,6 @@ from ragas.metrics import faithfulness, answer_relevancy, context_recall
 from ragas.dataset_schema import SingleTurnSample, EvaluationDataset
 from ragas.llms import llm_factory
 from ragas.embeddings import LangchainEmbeddingsWrapper
-from langchain_openai import ChatOpenAI
 
 from ragchecker import RAGResults, RAGChecker
 from ragchecker.metrics import all_metrics
@@ -48,6 +47,15 @@ embeddings = ONNXEmbedder(MODEL_DIR, TOKENIZER, MAX_LENGTH)
 rouge = rouge_scorer.RougeScorer(["rougeL"], use_stemmer=True)
 smooth = SmoothingFunction().method1
 
+
+PARAMETERS = {
+    "chunk_size": 120,
+    "chunk_overlap": 0,
+    "threshold": 0.7,
+    "hybrid_top_k": [1, 1],
+    "lambda_mult": 0.5,
+    "alpha": 0.7
+}
 
 
 def generate_answer(query: str, contexts: list[str]) -> str:
@@ -78,7 +86,12 @@ def ingest_documents(cases: list[dict], persist_dir: str) -> ManuIndex:
         if fname not in files_added:
             path = DATASET_DIR / fname
             print(f"  Ingesting {fname} …")
-            db.add_document(str(path))
+            db.add_document(
+                str(path),
+                chunk_size=PARAMETERS["chunk_size"],
+                chunk_overlap=PARAMETERS["chunk_overlap"],
+                threshold=PARAMETERS["threshold"],
+            )
             files_added.add(fname)
     return db
 
@@ -87,7 +100,12 @@ def collect_results(db: ManuIndex, cases: list[dict]) -> list[dict]:
     results = []
     for case in cases:
         for q in case["questions"]:
-            contexts = db.search(q["question"])
+            contexts = db.search(
+                q["question"],
+                hybrid_top_k=PARAMETERS["hybrid_top_k"],
+                lambda_mult=PARAMETERS["lambda_mult"],
+                alpha=PARAMETERS["alpha"],
+            )
             answer   = generate_answer(q["question"], contexts)
             results.append({
                 "id":       q["id"],

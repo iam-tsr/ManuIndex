@@ -19,7 +19,7 @@ class DocumentSummary:
             self,
             document: str,
             client: Any,
-            model_name: str = "gpt-4o-mini",
+            model_name: str,
         ):
         self.client = client
         self.document = document
