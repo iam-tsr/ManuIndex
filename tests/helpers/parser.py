@@ -23,7 +23,7 @@ def test_image_analyzer(document: str | bytes):
                 footer=False,
                 force_text=False,
                 dpi=300,
-                # analyze_image=analyzer,
+                analyze_image=analyzer,
             )
 
     with open(path_export, 'w', encoding='utf8') as f:
