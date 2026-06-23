@@ -97,9 +97,9 @@ class ManuIndex:
         self,
         query: str,
         top_k: int = 2,
-        hybrid_top_k: Optional[List[int]] = [2, 2],
-        lambda_mult: float = 0.8,
-        alpha: float = 0.7,
+        hybrid_top_k: Optional[List[int]] = [1, 1],
+        lambda_mult: float = 0.7,
+        alpha: float = 0.5,
         search_strategy: Optional[str] = "hybrid",
     ) -> List[str]:
         """Retrieve relevant passages for a query.
@@ -198,7 +198,11 @@ class ManuIndex:
     @staticmethod
     def _normalize(v) -> list:
         arr = np.array(v, dtype=np.float32)
-        return (arr / np.linalg.norm(arr)).tolist()
+        mean = np.mean(arr)
+        std = np.std(arr)
+        if std == 0:
+            return np.zeros_like(arr).tolist()
+        return ((arr - mean) / std).tolist()
 
     def _add(self, document: str, doc_id: str, **kwargs) -> List[Document]:
         self._create_summary(document, doc_id=doc_id)
@@ -262,7 +266,7 @@ class ManuIndex:
         data = self._load_meta()
         ids = [e["doc_id"] for e in data]
         matrix = np.array([e["values"] for e in data], dtype=np.float32)
-        query = query_embedding
+        query = self._normalize(query_embedding)
         scores = np.dot(matrix, query)
         return ids[int(np.argmax(scores))]
 
