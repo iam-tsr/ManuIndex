@@ -1,5 +1,4 @@
 from manu_index.src.inference import ONNXEmbedder
-from manu_index.src.summary import DocumentSummary
 from manu_index.src.manu_index import ManuIndex
 
-__all__ = ["ONNXEmbedder", "DocumentSummary", "ManuIndex"]
+__all__ = ["ONNXEmbedder", "ManuIndex"]

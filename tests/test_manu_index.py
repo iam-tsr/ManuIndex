@@ -10,13 +10,14 @@ client = OpenAI(
     api_key=os.getenv("OPENAI_API_KEY"), 
     base_url=os.getenv("OPENAI_BASE_URL"),
 )
+MODEL_NAME = os.getenv("OPENAI_MODEL_NAME")
 
-MODEL_DIR = 'onnx_models/embeddinggemma_300m/onnx/model_q4.onnx'
-TOKENIZER_DIR = 'onnx_models/embeddinggemma_300m'
+MODEL_DIR = 'onnx_models/qwen3_embedding_0dot6b/onnx/model_q4.onnx'
+TOKENIZER_DIR = 'onnx_models/qwen3_embedding_0dot6b'
 MAX_LENGTH = 768
 
 embeddings = ONNXEmbedder(MODEL_DIR, TOKENIZER_DIR, MAX_LENGTH)
-db = ManuIndex(embeddings=embeddings, client=client)
+db = ManuIndex(embeddings=embeddings, client=client, model_name=MODEL_NAME)
 
 def test_add_document():
     document = "./tests/examples/sample.md"
@@ -35,14 +36,14 @@ def test_search():
     query = "What happens to nerve cells in a baby's brain during early development?"
     doc_list = db.search(
         query=query,
-        top_k=2,
-        lambda_mult=0.5,
-        alpha=0.7,
+        hybrid_top_k=[2,1],
+        lambda_mult=0.7,
+        alpha=0.5,
     )
     print("Number of documents retrieved:", len(doc_list))
     return doc_list
 
-# Subsequent tests can be added here to test retrieval and other functionalities of the ManuIndex.
+# Subsequent tests to retrieval and other functionalities of the ManuIndex.
 def test_summary_creation():
     with open("./tests/examples/sample.md", "r") as f:
         document = f.read()

@@ -30,7 +30,7 @@ class ManuIndex:
         embeddings: Any,
         client: Any,
         model_name: str,
-        persist_directory: str = "manu_index_data",
+        persist_directory: str = "manu_index_db",
     ):
         """
         Args:
@@ -79,18 +79,18 @@ class ManuIndex:
 
         doc_id = uuid.uuid4().hex[:6]
 
-        chunks = self._add(
+        os.makedirs(self.persist_directory, exist_ok=True)
+        chunks = self._create_semantic_chunks(
             documents,
-            doc_id=doc_id,
             chunk_size=chunk_size,
             chunk_overlap=chunk_overlap,
             threshold=threshold,
         )
-
         self._lexical_store(doc_id=doc_id, documents=chunks)
 
         vector_store = FAISS.from_documents(documents=chunks, embedding=self.embeddings)
         vector_store.save_local(self.persist_directory, index_name=doc_id)
+        self._add(documents, doc_id=doc_id)
         return vector_store
 
     def search(
@@ -195,23 +195,14 @@ class ManuIndex:
         if os.path.exists(self.persist_directory):
             shutil.rmtree(self.persist_directory)
 
-    @staticmethod
-    def _normalize(v) -> list:
-        arr = np.array(v, dtype=np.float32)
-        mean = np.mean(arr)
-        std = np.std(arr)
-        if std == 0:
-            return np.zeros_like(arr).tolist()
-        return ((arr - mean) / std).tolist()
-
-    def _add(self, document: str, doc_id: str, **kwargs) -> List[Document]:
+    def _add(self, document: str, doc_id: str) -> None:
+        """Append document routing metadata after retrieval stores are persisted."""
         self._create_summary(document, doc_id=doc_id)
-        return self._create_semantic_chunks(document, **kwargs)
 
     def _create_summary(self, document: str, doc_id: str) -> None:
         """Summarize a document and append the result to the metadata file."""
         summary = DocumentSummary(document=document, client=self.client, model_name=self.model_name).summarize()
-        embedding = self._normalize(self.embeddings.embed_query(summary))
+        embedding = self.embeddings.embed_query(summary)
 
         entry = {
             "doc_id": doc_id,
@@ -257,16 +248,19 @@ class ManuIndex:
             raise FileNotFoundError("Metadata file not found. Has any document been indexed?")
         with open(meta_path, "r") as f:
             try:
-                return json.load(f)
+                data = json.load(f)
             except json.JSONDecodeError:
                 raise ValueError("Metadata file is corrupted.")
+        if not data:
+            raise ValueError("Metadata file is empty. Has any document been indexed?")
+        return data
 
     def _find_collection(self, query_embedding) -> str:
         """Return the doc_id whose summary embedding is closest to the query."""
         data = self._load_meta()
         ids = [e["doc_id"] for e in data]
         matrix = np.array([e["values"] for e in data], dtype=np.float32)
-        query = self._normalize(query_embedding)
+        query = np.array(query_embedding, dtype=np.float32)
         scores = np.dot(matrix, query)
         return ids[int(np.argmax(scores))]
 
