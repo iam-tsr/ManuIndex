@@ -2,7 +2,7 @@
 ManuIndex Benchmark Evaluation Pipeline
 ========================================
 Metrics: RAGAS (faithfulness, answer relevancy, context precision,
-         context recall, context relevancy)
+         context recall)
 """
 
 import os
@@ -43,7 +43,7 @@ PARAMETERS = {
     "chunk_size": 120,
     "chunk_overlap": 0,
     "threshold": 0.7,
-    "hybrid_top_k": [1, 1],
+    "hybrid_top_k": [2, 1],
     "lambda_mult": 0.7,
     "alpha": 0.5,
 }
@@ -54,7 +54,7 @@ def generate_answer(query: str, contexts: list[str]) -> str:
     response = client.chat.completions.create(
         model=LLM_MODEL,
         messages=[
-            {"role": "system", "content": "Answer the question using only the provided context."},
+            {"role": "system", "content": "Answer the question using only the provided context. Be concise — no markdown, no headers, no bullet points. Give a direct factual answer in 1-3 sentences. If the context does not contain the answer, say 'I cannot answer based on the given context.'"},
             {"role": "user", "content": f"Context:\n{context_block}\n\nQuestion: {query}"},
         ],
         temperature=0,
@@ -62,7 +62,7 @@ def generate_answer(query: str, contexts: list[str]) -> str:
     return response.choices[0].message.content.strip()
 
 def ingest_documents(cases: list[dict], persist_dir: str) -> ManuIndex:
-    db = ManuIndex(embeddings=embeddings, client=client, persist_directory=persist_dir)
+    db = ManuIndex(embeddings=embeddings, client=client, model_name=LLM_MODEL, persist_directory=persist_dir)
     files_added: set[str] = set()
     for case in cases:
         fname = case["file"]
@@ -135,7 +135,6 @@ def run_ragas(results: list[dict]) -> dict:
         ("answer_relevancy", _get_ragas_metric("answer_relevancy", "answer_relevance")),
         ("context_precision", _get_ragas_metric("context_precision")),
         ("context_recall", _get_ragas_metric("context_recall")),
-        ("context_relevancy", _get_ragas_metric("context_relevancy", "context_relevance")),
     ]
     metrics = []
     labels_by_column = {}
@@ -199,8 +198,7 @@ def main():
     t0 = time.time()
 
     print("\n[1/3] Ingesting documents …")
-    # db = ingest_documents(cases, persist_dir)
-    db = ManuIndex(embeddings=embeddings, client=client, persist_directory=persist_dir)
+    db = ingest_documents(cases, persist_dir)
 
     print("\n[2/3] Running queries …")
     results = collect_results(db, cases)

@@ -60,5 +60,6 @@ class DocumentSummary:
             temperature=0,
             max_tokens=5,
         )
+        print("Extracted titles:", titles)
         print("Judge response:", response.choices[0].message.content.strip())
         return response.choices[0].message.content.strip().lower() == "true"

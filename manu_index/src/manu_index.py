@@ -29,7 +29,7 @@ class ManuIndex:
         self,
         embeddings: Any,
         client: Any,
-        model_name: str = "gpt-4o-mini",
+        model_name: str,
         persist_directory: str = "manu_index_data",
     ):
         """
