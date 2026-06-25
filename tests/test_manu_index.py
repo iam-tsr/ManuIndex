@@ -14,17 +14,17 @@ MODEL_NAME = os.getenv("OPENAI_MODEL_NAME")
 
 MODEL_DIR = 'onnx_models/qwen3_embedding_0dot6b/onnx/model_q4.onnx'
 TOKENIZER_DIR = 'onnx_models/qwen3_embedding_0dot6b'
-MAX_LENGTH = 768
+MAX_LENGTH = 1024
 
 embeddings = ONNXEmbedder(MODEL_DIR, TOKENIZER_DIR, MAX_LENGTH)
-db = ManuIndex(embeddings=embeddings, client=client, model_name=MODEL_NAME)
+db = ManuIndex(embeddings=embeddings, client=client, model_name=MODEL_NAME, persist_directory="temp_index")
 
 def test_add_document():
     document = "./tests/examples/sample.md"
     
     db.add_document(
         documents=document,
-        chunk_size = 120,
+        chunk_size = 130,
         chunk_overlap = 0,
         threshold = 0.7
     )
@@ -36,7 +36,7 @@ def test_search():
     query = "What happens to nerve cells in a baby's brain during early development?"
     doc_list = db.search(
         query=query,
-        hybrid_top_k=[2,1],
+        hybrid_top_k=[1,1],
         lambda_mult=0.7,
         alpha=0.5,
     )
