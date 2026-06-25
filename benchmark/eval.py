@@ -1,14 +1,13 @@
 """
 ManuIndex Benchmark Evaluation Pipeline
 ========================================
-Metrics: RAGAS (faithfulness, answer relevancy, context recall),
-         RAGChecker, BLEU, ROUGE-L
+Metrics: RAGAS (faithfulness, answer relevancy, context precision,
+         context recall, context relevancy)
 """
 
 import os
 import json
 import time
-import tempfile
 from pathlib import Path
 from dotenv import load_dotenv
 
@@ -16,16 +15,10 @@ from openai import OpenAI
 from manu_index import ManuIndex, ONNXEmbedder
 
 from ragas import evaluate as ragas_evaluate
-from ragas.metrics import faithfulness, answer_relevancy, context_recall
+from ragas import metrics as ragas_metrics
 from ragas.dataset_schema import SingleTurnSample, EvaluationDataset
 from ragas.llms import llm_factory
 from ragas.embeddings import LangchainEmbeddingsWrapper
-
-from ragchecker import RAGResults, RAGChecker
-from ragchecker.metrics import all_metrics
-
-from nltk.translate.bleu_score import sentence_bleu, SmoothingFunction
-from rouge_score import rouge_scorer
 
 
 load_dotenv()
@@ -33,9 +26,9 @@ load_dotenv()
 DATASET_DIR = Path(__file__).parent / "dataset"
 CASES_FILE  = Path(__file__).parent / "evaluation_cases.json"
 
-MODEL_DIR    = "onnx_models/embeddinggemma_300m/onnx/model.onnx"
-TOKENIZER    = "onnx_models/embeddinggemma_300m"
-MAX_LENGTH   = 768
+MODEL_DIR    = "onnx_models/qwen3_embedding_0dot6b/onnx/model.onnx"
+TOKENIZER    = "onnx_models/qwen3_embedding_0dot6b"
+MAX_LENGTH   = 1024
 LLM_MODEL    = os.getenv("OPENAI_MODEL_NAME")
 
 client = OpenAI(
@@ -44,8 +37,6 @@ client = OpenAI(
 )
 
 embeddings = ONNXEmbedder(MODEL_DIR, TOKENIZER, MAX_LENGTH)
-rouge = rouge_scorer.RougeScorer(["rougeL"], use_stemmer=True)
-smooth = SmoothingFunction().method1
 
 
 PARAMETERS = {
@@ -53,8 +44,8 @@ PARAMETERS = {
     "chunk_overlap": 0,
     "threshold": 0.7,
     "hybrid_top_k": [1, 1],
-    "lambda_mult": 0.5,
-    "alpha": 0.7
+    "lambda_mult": 0.7,
+    "alpha": 0.5,
 }
 
 
@@ -69,14 +60,6 @@ def generate_answer(query: str, contexts: list[str]) -> str:
         temperature=0,
     )
     return response.choices[0].message.content.strip()
-
-def bleu(reference: str, hypothesis: str) -> float:
-    ref_tokens  = reference.lower().split()
-    hyp_tokens  = hypothesis.lower().split()
-    return sentence_bleu([ref_tokens], hyp_tokens, smoothing_function=smooth)
-
-def rouge_l(reference: str, hypothesis: str) -> float:
-    return rouge.score(reference, hypothesis)["rougeL"].fmeasure
 
 def ingest_documents(cases: list[dict], persist_dir: str) -> ManuIndex:
     db = ManuIndex(embeddings=embeddings, client=client, persist_directory=persist_dir)
@@ -117,6 +100,21 @@ def collect_results(db: ManuIndex, cases: list[dict]) -> list[dict]:
             print(f"  [{q['id']}] done")
     return results
 
+def _get_ragas_metric(*names: str):
+    for name in names:
+        metric = getattr(ragas_metrics, name, None)
+        if metric is not None:
+            return metric
+    return None
+
+
+def _configure_ragas_metric(metric, ragas_llm, ragas_embeddings):
+    if hasattr(metric, "llm"):
+        metric.llm = ragas_llm
+    if hasattr(metric, "embeddings"):
+        metric.embeddings = ragas_embeddings
+
+
 def run_ragas(results: list[dict]) -> dict:
     ragas_llm = llm_factory(model=LLM_MODEL, provider="openai", client=client)
     ragas_embeddings = LangchainEmbeddingsWrapper(embeddings)
@@ -132,60 +130,42 @@ def run_ragas(results: list[dict]) -> dict:
     ]
     dataset = EvaluationDataset(samples=samples)
 
-    faithfulness.llm = ragas_llm
-    context_recall.llm = ragas_llm
-    answer_relevancy.llm = ragas_llm
-    answer_relevancy.embeddings = ragas_embeddings
+    requested_metrics = [
+        ("faithfulness", _get_ragas_metric("faithfulness")),
+        ("answer_relevancy", _get_ragas_metric("answer_relevancy", "answer_relevance")),
+        ("context_precision", _get_ragas_metric("context_precision")),
+        ("context_recall", _get_ragas_metric("context_recall")),
+        ("context_relevancy", _get_ragas_metric("context_relevancy", "context_relevance")),
+    ]
+    metrics = []
+    labels_by_column = {}
+    skipped_metrics = []
+    for label, metric in requested_metrics:
+        if metric is None:
+            skipped_metrics.append(label)
+            continue
+        _configure_ragas_metric(metric, ragas_llm, ragas_embeddings)
+        metrics.append(metric)
+        labels_by_column[getattr(metric, "name", label)] = label
 
-    scores = ragas_evaluate(dataset, metrics=[faithfulness, answer_relevancy, context_recall])
-    return scores.to_pandas()[["faithfulness", "answer_relevancy", "context_recall"]].mean().to_dict()
+    if not metrics:
+        raise RuntimeError("No requested RAGAS metrics are available in the installed ragas version.")
 
-def run_ragchecker(results: list[dict]) -> dict:
-    rag_results_json = {
-        "results": [
-            {
-                "query_id":       r["id"],
-                "query":          r["question"],
-                "gt_answer":      r["ground_truth"],
-                "response":       r["answer"],
-                "retrieved_context": [{"text": c} for c in r["contexts"]],
-            }
-            for r in results
-        ]
-    }
+    scores = ragas_evaluate(dataset, metrics=metrics)
+    score_df = scores.to_pandas()
+    mean_scores = {}
+    for column, label in labels_by_column.items():
+        if column in score_df:
+            mean_scores[label] = float(score_df[column].mean())  # pyright: ignore[reportArgumentType]
+        else:
+            skipped_metrics.append(label)
 
-    with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
-        json.dump(rag_results_json, f)
-        tmp_path = f.name
+    if skipped_metrics:
+        mean_scores["skipped_metrics"] = sorted(set(skipped_metrics))
+    return mean_scores
 
-    api_base = os.getenv("OPENAI_BASE_URL")
-    try:
-        rag_results = RAGResults.from_json(Path(tmp_path).read_text())
-        checker = RAGChecker(
-            extractor_name=LLM_MODEL,
-            checker_name=LLM_MODEL,
-            extractor_api_base=api_base,
-            checker_api_base=api_base,
-            batch_size_extractor=10,
-            batch_size_checker=10,
-        )
-        checker.evaluate(rag_results, all_metrics)
-        merged = {}
-        merged.update(rag_results.metrics.get("retriever_metrics", {}))
-        merged.update(rag_results.metrics.get("generator_metrics", {}))
-        return merged
-    finally:
-        os.unlink(tmp_path)
 
-def run_traditional(results: list[dict]) -> dict:
-    bleu_scores   = [bleu(r["ground_truth"], r["answer"]) for r in results]
-    rouge_scores  = [rouge_l(r["ground_truth"], r["answer"]) for r in results]
-    return {
-        "bleu_avg":    round(sum(bleu_scores)  / len(bleu_scores),  4),
-        "rouge_l_avg": round(sum(rouge_scores) / len(rouge_scores), 4),
-    }
-
-def print_report(ragas_scores: dict, ragchecker_scores: dict, trad_scores: dict, elapsed: float):
+def print_report(ragas_scores: dict, elapsed: float):
     sep = "─" * 52
     print(f"\n{'═' * 52}")
     print("  ManuIndex Benchmark Report")
@@ -194,35 +174,16 @@ def print_report(ragas_scores: dict, ragchecker_scores: dict, trad_scores: dict,
     print("\n  RAGAS")
     print(sep)
     for k, v in ragas_scores.items():
-        print(f"  {k:<28} {v:.4f}")
-
-    print("\n  RAGChecker")
-    print(sep)
-    for k, v in ragchecker_scores.items():
         print(f"  {k:<28} {v:.4f}" if isinstance(v, float) else f"  {k:<28} {v}")
-
-    print("\n  Traditional (BLEU / ROUGE)")
-    print(sep)
-    for k, v in trad_scores.items():
-        print(f"  {k:<28} {v:.4f}")
 
     print(f"\n  Total time: {elapsed:.1f}s")
     print(f"{'═' * 52}\n")
 
 
-def save_report(results: list[dict], ragas_scores, ragchecker_scores, trad_scores):
+def save_report(results: list[dict], ragas_scores: dict):
     report = {
-        "ragas":       ragas_scores,
-        "ragchecker":  ragchecker_scores,
-        "traditional": trad_scores,
-        "per_question": [
-            {
-                "id":     r["id"],
-                "bleu":   round(bleu(r["ground_truth"], r["answer"]), 4),
-                "rougeL": round(rouge_l(r["ground_truth"], r["answer"]), 4),
-            }
-            for r in results
-        ],
+        "ragas": ragas_scores,
+        "per_question": results,
     }
     out = Path(__file__).parent / "report.json"
     out.write_text(json.dumps(report, indent=2))
@@ -233,28 +194,24 @@ def save_report(results: list[dict], ragas_scores, ragchecker_scores, trad_score
 def main():
     cases = json.loads(CASES_FILE.read_text())["evaluation_cases"]
 
-    with tempfile.TemporaryDirectory(prefix="manu_eval_") as persist_dir:
-        t0 = time.time()
+    # with tempfile.TemporaryDirectory(prefix="manu_eval_") as persist_dir:
+    persist_dir = "manu_index_db"
+    t0 = time.time()
 
-        print("\n[1/4] Ingesting documents …")
-        db = ingest_documents(cases, persist_dir)
+    print("\n[1/3] Ingesting documents …")
+    # db = ingest_documents(cases, persist_dir)
+    db = ManuIndex(embeddings=embeddings, client=client, persist_directory=persist_dir)
 
-        print("\n[2/4] Running queries …")
-        results = collect_results(db, cases)
+    print("\n[2/3] Running queries …")
+    results = collect_results(db, cases)
 
-        print("\n[3/4] RAGAS evaluation …")
-        ragas_scores = run_ragas(results)
+    print("\n[3/3] RAGAS evaluation …")
+    ragas_scores = run_ragas(results)
 
-        print("\n[3/4] RAGChecker evaluation …")
-        ragchecker_scores = run_ragchecker(results)
+    elapsed = time.time() - t0
 
-        print("\n[4/4] BLEU / ROUGE …")
-        trad_scores = run_traditional(results)
-
-        elapsed = time.time() - t0
-
-    print_report(ragas_scores, ragchecker_scores, trad_scores, elapsed)
-    save_report(results, ragas_scores, ragchecker_scores, trad_scores)
+    print_report(ragas_scores, elapsed)
+    save_report(results, ragas_scores)
 
 
 if __name__ == "__main__":

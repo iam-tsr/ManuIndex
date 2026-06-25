@@ -16,9 +16,5 @@ dependencies = [
 
 [dependency-groups]
 dev = [
-    "nltk>=3.9.4",
     "ragas>=0.4.3",
-    "ragchecker>=0.1.9",
-    "rouge-score>=0.1.2",
-    "trulens>=2.8.1",
 ]

@@ -1,0 +1,19 @@
+{
+  "overall_metrics": {
+    "precision": 70.2,
+    "recall": 73.2,
+    "f1": 68.5
+  },
+  "retriever_metrics": {
+    "claim_recall": 77.8,
+    "context_precision": 71.1
+  },
+  "generator_metrics": {
+    "context_utilization": 79.4,
+    "noise_sensitivity_in_relevant": 18.1,
+    "noise_sensitivity_in_irrelevant": 5.2,
+    "hallucination": 2.0,
+    "self_knowledge": 0.0,
+    "faithfulness": 93.5
+  }
+}

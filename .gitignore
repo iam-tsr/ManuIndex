@@ -9,3 +9,4 @@ manu_index_data/
 notebook_exp/
 .venv
 .env
+manu_index_db/

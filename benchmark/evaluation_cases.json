@@ -269,6 +269,486 @@
           "expected_answer": "Isolating processes to run on cores specific to a NUMA node reduces memory latency and gives higher performance compared to processes running across multiple NUMA nodes."
         }
       ]
+    },
+    {
+      "file": "calgary_homeless_foundation_webinar_follow_up.md",
+      "questions": [
+        {
+          "id": "CALG-001",
+          "question": "What was the gender breakdown of homeless people in the U.S. in January 2020, and how did the Canadian 2018 count compare?",
+          "expected_answer": "In the U.S. in January 2020, about 62% were men or boys, 38% were women or girls, and about 1% were transgender or non-conforming. Canada’s Everyone Counts 2018 results were similar, with 62% male, 36% female, and 2% non-binary."
+        },
+        {
+          "id": "CALG-002",
+          "question": "Why does the report say it is hard to ask homeless people a question during a point-in-time count about whether they would accept housing?",
+          "expected_answer": "Because many homeless people are sleeping or busy during the PIT count, which generally happens around 2 a.m., and it would be awkward to ask a question that the interviewer cannot act on in that moment."
+        },
+        {
+          "id": "CALG-003",
+          "question": "What limitation of administrative shelter data does the report emphasize when comparing it with PiT counts?",
+          "expected_answer": "Administrative shelter data do not capture unsheltered people, who are roughly half of the homeless population in Canada and the U.S. and a large majority on the U.S. West Coast."
+        },
+        {
+          "id": "CALG-004",
+          "question": "According to the report, what are some reasons people experience homelessness and how do civil society organizations help?",
+          "expected_answer": "Reasons include poverty, health and addiction issues, domestic violence, and housing discrimination; civil society organizations help by dealing with those issues and supporting people experiencing homelessness."
+        },
+        {
+          "id": "CALG-005",
+          "question": "What does the report say about combining PiT counts with by-name lists and about using qualitative and quantitative methods?",
+          "expected_answer": "PiT counts combined with by-name lists should work well. The report also says rich qualitative descriptions are useful, but you still need quantitative information to know whether the ideas are more than anecdotes, so both methods are needed."
+        }
+      ]
+    },
+    {
+      "file": "coopercompanies_cash_dividend_press_release.md",
+      "questions": [
+        {
+          "id": "COOP-001",
+          "question": "What cash dividend did CooperCompanies declare, and when is it payable?",
+          "expected_answer": "The company declared a semi-annual dividend of 3 cents per share, payable on August 11, 2021."
+        },
+        {
+          "id": "COOP-002",
+          "question": "What is the record date for the CooperCompanies dividend?",
+          "expected_answer": "The record date is July 27, 2021."
+        },
+        {
+          "id": "COOP-003",
+          "question": "What are the two business units CooperCompanies operates through?",
+          "expected_answer": "CooperVision and CooperSurgical."
+        },
+        {
+          "id": "COOP-004",
+          "question": "Where is CooperCompanies headquartered and how many employees does it have?",
+          "expected_answer": "It is headquartered in San Ramon, California, and has a workforce of more than 12,000."
+        },
+        {
+          "id": "COOP-005",
+          "question": "In how many countries are CooperCompanies’ products sold, and what are its two focus areas?",
+          "expected_answer": "Its products are sold in over 100 countries; the two focus areas are vision care through CooperVision and women’s, babies’, and families’ health through CooperSurgical."
+        }
+      ]
+    },
+    {
+      "file": "form_adv_part_2b_brochure_supplement_johnson.md",
+      "questions": [
+        {
+          "id": "FORMADV-001",
+          "question": "What degree did Christopher K. Johnson earn, from which university, and in what year?",
+          "expected_answer": "He earned a Bachelor of Arts in Business Administration and Marketing, with a minor in Interpersonal Communication, from Ohio University in 2000."
+        },
+        {
+          "id": "FORMADV-002",
+          "question": "What is Christopher K. Johnson’s current role at Collaborative Financial and when did he start it?",
+          "expected_answer": "He serves as Chief Executive Officer of Collaborative Financial Partners LLC and has held that role since September 2017."
+        },
+        {
+          "id": "FORMADV-003",
+          "question": "What was Christopher K. Johnson’s prior employment before Collaborative Financial?",
+          "expected_answer": "He was a Private Wealth Advisor at Ameriprise Financial Services, Inc. from April 2006 to September 2017."
+        },
+        {
+          "id": "FORMADV-004",
+          "question": "What does the brochure say about disciplinary information for Mr. Johnson?",
+          "expected_answer": "There are no legal, civil, or disciplinary events to disclose; he has never been involved in any regulatory, civil, or criminal action and has had no client complaints, lawsuits, arbitration claims, or administrative proceedings."
+        },
+        {
+          "id": "FORMADV-005",
+          "question": "What are some of Christopher K. Johnson’s other business activities and how much time do they take?",
+          "expected_answer": "He owns Mason Financial Solutions, Triple M, and Maderville, LLC, and these activities take less than 10 hours of his time per month. He also does insurance work through Collaborative Insurance Partners."
+        }
+      ]
+    },
+    {
+      "file": "graphic_packaging_holding_company_conflict_minerals_report.md",
+      "questions": [
+        {
+          "id": "GPH-001",
+          "question": "Why was Graphic Packaging required to file a conflict minerals report?",
+          "expected_answer": "Because some electronic components used in its packaging machinery products may contain conflict minerals, and the company could not definitively determine the origin of all 3TG used in those components."
+        },
+        {
+          "id": "GPH-002",
+          "question": "What minerals are referred to as 3TG in the report?",
+          "expected_answer": "Tin, tantalum, tungsten, and gold."
+        },
+        {
+          "id": "GPH-003",
+          "question": "What does the report say about the company’s packaging machinery products and 3TG?",
+          "expected_answer": "The company determined that its paper-based packaging products do not contain 3TG, but some electronic components used in packaging machinery may contain 3TG."
+        },
+        {
+          "id": "GPH-004",
+          "question": "How many suppliers responded to the company’s 2020 inquiry, and what did most of them say?",
+          "expected_answer": "135 suppliers responded. Ninety-one said their products did not contain 3TG, 24 said their products contained 3TG, and 19 said they were distributors who did not know whether their products contained 3TG and/or the source of any 3TG."
+        },
+        {
+          "id": "GPH-005",
+          "question": "What was the company’s conclusion and 2021 mitigation plan?",
+          "expected_answer": "It could not determine definitively that its packaging machinery products produced in 2020 are free of conflict minerals. In 2021 it planned to keep working with suppliers, re-request information using the Conflict Minerals Reporting Template, and add 3TG sourcing provisions to new and renewed contracts where possible."
+        }
+      ]
+    },
+    {
+      "file": "gt_window_products_privacy_policy.md",
+      "questions": [
+        {
+          "id": "GTWIN-001",
+          "question": "Which groups does GT Window Products’ privacy policy apply to?",
+          "expected_answer": "It applies to customers who use its services or create an account, suppliers, and website visitors."
+        },
+        {
+          "id": "GTWIN-002",
+          "question": "What personal information can the website collect from visitors who only browse the site?",
+          "expected_answer": "Server logs can capture operating system, browser software, IP address, URL, and the date and time of the visit."
+        },
+        {
+          "id": "GTWIN-003",
+          "question": "What are the legitimate business purposes listed for processing personal information?",
+          "expected_answer": "They include staying in touch with customers, account management, understanding customer interactions, monitoring and improving the website, identifying suspected criminal activity, managing the supply chain and supplier relationships, and protecting the company’s rights."
+        },
+        {
+          "id": "GTWIN-004",
+          "question": "How long does GT Window Products normally retain personal information?",
+          "expected_answer": "For one-off purchases, records are normally kept for 7 years. For account customers or suppliers, records are normally kept for 7 years after account closure or the last purchase or sale."
+        },
+        {
+          "id": "GTWIN-005",
+          "question": "What rights and contact details does the policy provide for data subjects?",
+          "expected_answer": "It says people may have rights to restrict or object to processing, delete data, withdraw consent, receive a portable copy, and complain to a Data Protection Authority. The DPO contact is GT Window Products Ltd, Unit 4203 Oakfield Close, Tewkesbury Business Park, Tewkesbury, Gloucestershire GL20 8PF, or accounts@gtwindowproducts.co.uk."
+        }
+      ]
+    },
+    {
+      "file": "heart_disease_in_pregnancy_research_article.md",
+      "questions": [
+        {
+          "id": "HEART-001",
+          "question": "What was the study period and setting for the heart disease in pregnancy article?",
+          "expected_answer": "It was a hospital-based prospective analytical study conducted at Sultania Zanana Hospital, Gandhi Medical College, Bhopal, from March 1, 2017 to February 28, 2018."
+        },
+        {
+          "id": "HEART-002",
+          "question": "How many cases of heart disease were found, and what incidence did the study report?",
+          "expected_answer": "The study found 51 cases of heart disease, with an incidence of 0.25%."
+        },
+        {
+          "id": "HEART-003",
+          "question": "Which NYHA functional class was most common among the patients?",
+          "expected_answer": "NYHA functional class II was most common, with 24 patients or 47.06%."
+        },
+        {
+          "id": "HEART-004",
+          "question": "Was rheumatic heart disease or congenital heart disease more common, and by how much?",
+          "expected_answer": "Rheumatic heart disease was more common; the paper says RHD cases were four times more common than CHD."
+        },
+        {
+          "id": "HEART-005",
+          "question": "What complications and maternal deaths did the study report, and what conclusion did it draw about management?",
+          "expected_answer": "Congestive cardiac failure was the most common complication. There were three maternal deaths, all in NYHA class III, all unbooked, and all presenting first in labor. The paper concludes that joint management by obstetrician, cardiologist, and anesthetist is needed for better outcomes."
+        }
+      ]
+    },
+    {
+      "file": "hexatronic_acquires_weterings_press_release.md",
+      "questions": [
+        {
+          "id": "HEXA-001",
+          "question": "What did Hexatronic acquire, and when did the acquisition take place?",
+          "expected_answer": "Hexatronic acquired 100% of the shares of H. Weterings Galgeweg BV in the Netherlands, and the acquisition took place on July 1, 2021."
+        },
+        {
+          "id": "HEXA-002",
+          "question": "What was the purchase price and additional consideration for Weterings?",
+          "expected_answer": "The purchase price was 5.6 MEUR on a debt-free basis, with additional consideration of up to 2.8 MEUR based on EBITDA for the coming two years."
+        },
+        {
+          "id": "HEXA-003",
+          "question": "How was the fixed purchase price paid?",
+          "expected_answer": "80% in cash and 20% in newly issued shares."
+        },
+        {
+          "id": "HEXA-004",
+          "question": "When was Weterings founded and what does it produce?",
+          "expected_answer": "Weterings was founded in 1945 and produces ducts, tubes, and hoses used mainly for the FTTH and agricultural markets."
+        },
+        {
+          "id": "HEXA-005",
+          "question": "How many Hexatronic shares were issued in the new share issue and at what subscription price?",
+          "expected_answer": "76,921 ordinary shares were issued at a subscription price of SEK 146.76 per share."
+        }
+      ]
+    },
+    {
+      "file": "kilniver_and_kilmelford_community_council_minutes.md",
+      "questions": [
+        {
+          "id": "KILN-001",
+          "question": "When and where was the Kilninver and Kilmelford Community Council meeting held?",
+          "expected_answer": "It was held on Tuesday 8 February 2011 at Kilmelford Village Hall."
+        },
+        {
+          "id": "KILN-002",
+          "question": "What happened with the previous meeting’s minutes?",
+          "expected_answer": "The minutes from 14 December 2010 were approved as a true and accurate representation; AM proposed and CC seconded."
+        },
+        {
+          "id": "KILN-003",
+          "question": "What was the status of the Raera Wind Farm appeal?",
+          "expected_answer": "There was no news of an appeal, and any appeal would need to be made within three months of the 14 December determination."
+        },
+        {
+          "id": "KILN-004",
+          "question": "What was the issue with the Kilmelford notice board grant?",
+          "expected_answer": "The grant application for notice boards at the shop and village hall was being considered; 50% of the grant was for the community council noticeboard near the shop, and the council would pay 50% of the cost to KKCA for the village hall notice board."
+        },
+        {
+          "id": "KILN-005",
+          "question": "When and where is the next meeting scheduled?",
+          "expected_answer": "Tuesday 12 April at 8:00 p.m. in Kilmelford Village Hall."
+        }
+      ]
+    },
+    {
+      "file": "minutes_foundation_meeting_february_16_2012.md",
+      "questions": [
+        {
+          "id": "FOUND-001",
+          "question": "What time was the Foundation meeting called to order?",
+          "expected_answer": "It was called to order at 6:30 p.m."
+        },
+        {
+          "id": "FOUND-002",
+          "question": "What details did the Heritage Committee share about the Heritage Festival?",
+          "expected_answer": "They said the festival has been celebrated for 47 years, takes place every second Saturday of October, starts with a parade followed by a festival at Tri-City Park, and draws about ten to fifteen thousand people each year."
+        },
+        {
+          "id": "FOUND-003",
+          "question": "What happened to the Remote Caller Bingo proposal?",
+          "expected_answer": "It was placed on hold because the estimated cost to a nonprofit host was $300 a day, which the American Legion could not afford."
+        },
+        {
+          "id": "FOUND-004",
+          "question": "What printing decision did the board approve?",
+          "expected_answer": "The board approved printing 1,000 copies through Sauce, by a unanimous voice vote."
+        },
+        {
+          "id": "FOUND-005",
+          "question": "When and where was the next regular Foundation meeting scheduled?",
+          "expected_answer": "March 19, 2012 at Placentia City Hall."
+        }
+      ]
+    },
+    {
+      "file": "napoleon_water_treatment_plant_2020_annual_report.md",
+      "questions": [
+        {
+          "id": "NAP-001",
+          "question": "What are Napoleon Water Treatment Plant’s two water sources?",
+          "expected_answer": "The plant draws daily from the Maumee River and also uses the Wauseon Reservoir."
+        },
+        {
+          "id": "NAP-002",
+          "question": "How much raw water and clean drinking water did the plant handle in 2020?",
+          "expected_answer": "It pumped 407 million gallons of raw water to the Wauseon Reservoir and provided roughly 436 million gallons of clean drinking water."
+        },
+        {
+          "id": "NAP-003",
+          "question": "What did the PFAS sampling show in 2020?",
+          "expected_answer": "Six PFAS compounds were sampled and none were detected in the finished drinking water."
+        },
+        {
+          "id": "NAP-004",
+          "question": "What were the Cryptosporidium results and what treatment system is in place?",
+          "expected_answer": "Three of 12 raw-water samples detected Cryptosporidium, but it was not detected in the finished water. The plant uses a UV disinfection system that effectively removes Cryptosporidium detected in the raw surface water."
+        },
+        {
+          "id": "NAP-005",
+          "question": "Did the city water system receive any violations in 2020?",
+          "expected_answer": "No, the City of Napoleon Public Water System did not receive any violations for 2020."
+        }
+      ]
+    },
+    {
+      "file": "parks_and_recreation_board_meeting_minutes.md",
+      "questions": [
+        {
+          "id": "PARK-001",
+          "question": "When was the Parks and Recreation Board meeting held and when did it start?",
+          "expected_answer": "It was the May 20, 2021 regular meeting and it was called to order at 6:00 p.m."
+        },
+        {
+          "id": "PARK-002",
+          "question": "What did Mike Meredith say in public comment?",
+          "expected_answer": "He said he saw surveyors in Yellow Breeches Park, wanted to know what was happening in the land adjacent to his property, and wanted to meet the board members."
+        },
+        {
+          "id": "PARK-003",
+          "question": "What was the board’s decision on the no-refund request for unused field use?",
+          "expected_answer": "The board voted to adhere to policy and not issue a refund; the motion passed 5 to 1."
+        },
+        {
+          "id": "PARK-004",
+          "question": "What temporary food truck policy did the board approve?",
+          "expected_answer": "Groups must contact Parks and Recreation and pay a $100 special event fee plus $25 per food truck, with a maximum of 2 trucks per event, and trucks must use designated spots and handle their own trash."
+        },
+        {
+          "id": "PARK-005",
+          "question": "What did the school district and pool update say about future use?",
+          "expected_answer": "Occupancy restrictions had been lifted, which could allow pool use, but the school planned to wax floors after school ended and drain the pool in August, leaving no time to schedule swim lessons."
+        }
+      ]
+    },
+    {
+      "file": "pearl_fleet_booking_terms_and_conditions.md",
+      "questions": [
+        {
+          "id": "PEARL-001",
+          "question": "What deposit and final payment schedule does Pearl Fleet require?",
+          "expected_answer": "A non-refundable deposit of 35% is due within 14 days of the proforma invoice, and the final 65% is due no later than 90 days before the cruise starts."
+        },
+        {
+          "id": "PEARL-002",
+          "question": "What are the embarkation and disembarkation times?",
+          "expected_answer": "Boarding begins at 1400h on the first day, and disembarkation is strictly between 0800h and 0930h on the last day."
+        },
+        {
+          "id": "PEARL-003",
+          "question": "What is the single-occupancy supplement?",
+          "expected_answer": "A single supplement of 80% of the full cruise price is charged."
+        },
+        {
+          "id": "PEARL-004",
+          "question": "What are the rules for children and non-divers?",
+          "expected_answer": "Only children above age 7 may be onboard. Children under 11 are not charged if they share a bed with their parents and are non-divers, and non-divers get a 10% discount."
+        },
+        {
+          "id": "PEARL-005",
+          "question": "What are the cancellation charges based on departure date?",
+          "expected_answer": "Cancellations 90 days or more before departure are charged the equivalent of the deposit paid; cancellations less than 90 days before departure are charged 100% of the invoice amount."
+        }
+      ]
+    },
+    {
+      "file": "regulatory_uncertainty_briefing_paper.md",
+      "questions": [
+        {
+          "id": "REG-001",
+          "question": "What is the paper’s main argument about the cause of weak job growth?",
+          "expected_answer": "The paper argues that regulatory uncertainty is a phony explanation and that the real problem is weak demand caused by the financial crisis and the collapse of housing and stock market bubbles."
+        },
+        {
+          "id": "REG-002",
+          "question": "What does the paper say about firms’ cash and profits?",
+          "expected_answer": "It says firms have substantial cash on hand to invest and are making about a third more profit than before the recession, so they are not being constrained by current profitability or access to financing."
+        },
+        {
+          "id": "REG-003",
+          "question": "How far below pre-recession levels was final per-person demand in spring 2011, and how far below expected levels did it fall?",
+          "expected_answer": "It was 0.7% lower than in the last quarter of 2007, and 8.5% lower than expected."
+        },
+        {
+          "id": "REG-004",
+          "question": "What do the weekly-hours data show about private-sector work hours?",
+          "expected_answer": "Average weekly hours for private-sector workers were 34.6 in 2007, fell to 33.7 in June 2009, and recovered only to 34.2 by August 2011; restoring hours to the pre-recession level would be equivalent to adding about 1.2 million jobs."
+        },
+        {
+          "id": "REG-005",
+          "question": "What did the NFIB survey and the business-economist surveys say was the real problem?",
+          "expected_answer": "The largest NFIB response was poor sales, and the survey of business economists found that most viewed the current regulatory environment as good and saw uncertainty as a proxy for the bad economy rather than a major barrier to hiring."
+        }
+      ]
+    },
+    {
+      "file": "sagard_newgen_i_tracing_exclusivity_agreement.md",
+      "questions": [
+        {
+          "id": "SAG-001",
+          "question": "What transaction did Sagard NewGen announce, and with whom?",
+          "expected_answer": "Sagard NewGen signed an exclusivity agreement to invest a minority stake in I-TRACING alongside Eurazeo, I-TRACING’s management, and the founders Théodore-Michel Vrangos and Laurent Charvériat."
+        },
+        {
+          "id": "SAG-002",
+          "question": "What does I-TRACING do and when was it founded?",
+          "expected_answer": "I-TRACING provides cybersecurity services, including consultancy, audits and pen tests, managed services, identity and access management, SOCs, and CERTs, and it was founded in 2005."
+        },
+        {
+          "id": "SAG-003",
+          "question": "Where is I-TRACING headquartered and how many experts does it employ?",
+          "expected_answer": "It is headquartered in Paris and employs more than 285 experts."
+        },
+        {
+          "id": "SAG-004",
+          "question": "What revenue did I-TRACING generate in 2020 and what is its 2021 target?",
+          "expected_answer": "It generated nearly €50 million in 2020 and targets around €70 million in 2021."
+        },
+        {
+          "id": "SAG-005",
+          "question": "What is Sagard NewGen’s investment focus and revenue cap?",
+          "expected_answer": "It supports leaders in healthcare and technology, makes majority and minority equity investments in profitable European companies, and targets companies with revenues of up to €150 million."
+        }
+      ]
+    },
+    {
+      "file": "the_broad_and_narrow_ways.md",
+      "questions": [
+        {
+          "id": "BROAD-001",
+          "question": "What are the two gates, two roads, two crowds, and two destinations described in the essay?",
+          "expected_answer": "The essay contrasts a wide gate and narrow gate, a broad road and narrow road, many people versus few people, and destruction versus life."
+        },
+        {
+          "id": "BROAD-002",
+          "question": "How does the essay describe the broad way and the narrow way?",
+          "expected_answer": "The broad way is wide, attractive, and easy, and it leads to destruction. The narrow way is hard to find, constrained, and difficult, but it leads to life."
+        },
+        {
+          "id": "BROAD-003",
+          "question": "Who is described as the entrance to the narrow way?",
+          "expected_answer": "The Lord Jesus Christ is described as the entrance or door to the narrow way."
+        },
+        {
+          "id": "BROAD-004",
+          "question": "What does the essay say about the majority versus the few?",
+          "expected_answer": "It says the majority usually rush toward destruction, while only a few seek and find the way to life."
+        },
+        {
+          "id": "BROAD-005",
+          "question": "What are the two destinations and what scriptural images are used for them?",
+          "expected_answer": "The two destinations are death and destruction versus life and the kingdom. The essay also refers to the tree of life, the kingdom city, and Christ’s example in following the way."
+        }
+      ]
+    },
+    {
+      "file": "vmware_cloud_automation_partner_brief.md",
+      "questions": [
+        {
+          "id": "VMW-001",
+          "question": "What does Morpheus promise for VMware cloud automation setup time and cloud coverage?",
+          "expected_answer": "It says Morpheus can be up and running in under an hour and can centralize control of 20+ clouds."
+        },
+        {
+          "id": "VMW-002",
+          "question": "What VMware technologies does Morpheus integrate with?",
+          "expected_answer": "It integrates with VMware vSphere, VMware Cloud on AWS, vCloud Director, VMware Integrated OpenStack, ESXi, Fusion, VMware NSX, and vRealize Orchestrator."
+        },
+        {
+          "id": "VMW-003",
+          "question": "What problems does the brief say Morpheus helps solve?",
+          "expected_answer": "It addresses high costs and lack of visibility, security and governance blind spots, brittle automation, poor application life-cycle integration, provisioning and automation, multi-cloud blueprinting, storage/backup/recovery, and networking services."
+        },
+        {
+          "id": "VMW-004",
+          "question": "What are Morpheus’s three audience-specific benefits for operations, developers, and business?",
+          "expected_answer": "For operations it centralizes governance and policies; for developers it enables self-service, full API/CLI access, and infrastructure-as-code blueprinting; for business it uses AI to lower cloud costs and improve vendor management."
+        },
+        {
+          "id": "VMW-005",
+          "question": "What performance and cost claims does the brief make about self-service provisioning and cloud costs?",
+          "expected_answer": "It claims developers can provision apps 150x faster, and that analytics can reduce cloud costs by 30% with discovery and guided rightsizing."
+        }
+      ]
     }
   ]
 }
