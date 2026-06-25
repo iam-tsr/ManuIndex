@@ -215,7 +215,7 @@ class ManuIndex:
 
         existing = []
         if os.path.exists(meta_path):
-            with open(meta_path, "r") as f:
+            with open(meta_path, "r", encoding="utf-8") as f:
                 try:
                     existing = json.load(f)
                 except json.JSONDecodeError:
@@ -227,15 +227,15 @@ class ManuIndex:
     def _write_meta(self, entries: list) -> None:
         """Write metadata entries to disk with inline embedding arrays for readability."""
         meta_path = os.path.join(self.persist_directory, META_FILENAME)
-        with open(meta_path, "w") as f:
+        with open(meta_path, "w", encoding="utf-8") as f:
             f.write("[\n")
             for i, entry in enumerate(entries):
                 values_inline = json.dumps(entry["values"], separators=(", ", ": "))
                 f.write(
                     f'  {{\n'
-                    f'    "doc_id": {json.dumps(entry["doc_id"])},\n'
+                    f'    "doc_id": {json.dumps(entry["doc_id"], ensure_ascii=False)},\n'
                     f'    "values": {values_inline},\n'
-                    f'    "summary": {json.dumps(entry["summary"])}\n'
+                    f'    "summary": {json.dumps(entry["summary"], ensure_ascii=False)}\n'
                     f'  }}'
                 )
                 f.write(",\n" if i < len(entries) - 1 else "\n")
@@ -246,7 +246,7 @@ class ManuIndex:
         meta_path = os.path.join(self.persist_directory, META_FILENAME)
         if not os.path.exists(meta_path):
             raise FileNotFoundError("Metadata file not found. Has any document been indexed?")
-        with open(meta_path, "r") as f:
+        with open(meta_path, "r", encoding="utf-8") as f:
             try:
                 data = json.load(f)
             except json.JSONDecodeError:

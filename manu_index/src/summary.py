@@ -1,7 +1,7 @@
 import re
 from typing import Any
 
-SYSTEM_PROMPT = """You are a document summarization expert. Your task is to produce a short, dense, narrative summary that captures the document's core topics, key arguments, and domain — in 3 to 5 sentences. The summary will be used as a routing vector in a retrieval system, so it must be semantically rich and representative of the full document."""
+SYSTEM_PROMPT = """You are a document summarization expert. Your task is to produce a short, dense, narrative summary that captures the document's core topics, key arguments, and domain — in 4 to 5 sentences. The summary will be used as a routing vector in a retrieval system, so it must be semantically rich and representative of the full document."""
 
 JUDGE_PROMPT = """You are evaluating whether a list of section headings provides sufficient context to write a meaningful summary of a document.
 
@@ -36,7 +36,7 @@ class DocumentSummary:
                 {"role": "user", "content": content},
             ],
             temperature=0.3,
-            max_tokens=512,
+            max_tokens=1024,
         )
         return response.choices[0].message.content
 
