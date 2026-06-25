@@ -40,10 +40,10 @@ embeddings = ONNXEmbedder(MODEL_DIR, TOKENIZER, MAX_LENGTH)
 
 
 PARAMETERS = {
-    "chunk_size": 120,
+    "chunk_size": 130,
     "chunk_overlap": 0,
     "threshold": 0.7,
-    "hybrid_top_k": [2, 1],
+    "hybrid_top_k": [1, 1],
     "lambda_mult": 0.7,
     "alpha": 0.5,
 }
@@ -54,7 +54,7 @@ def generate_answer(query: str, contexts: list[str]) -> str:
     response = client.chat.completions.create(
         model=LLM_MODEL,
         messages=[
-            {"role": "system", "content": "Answer the question using only the provided context. Be concise — no markdown, no headers, no bullet points. Give a direct factual answer in 1-3 sentences. If the context does not contain the answer, say 'I cannot answer based on the given context.'"},
+            {"role": "system", "content": "Answer the question using only the provided context. Be concise — no markdown, no headers, no bullet points."},
             {"role": "user", "content": f"Context:\n{context_block}\n\nQuestion: {query}"},
         ],
         temperature=0,
@@ -185,7 +185,7 @@ def save_report(results: list[dict], ragas_scores: dict):
         "per_question": results,
     }
     out = Path(__file__).parent / "report.json"
-    out.write_text(json.dumps(report, indent=2))
+    out.write_text(json.dumps(report, indent=2), encoding="utf-8")
     print(f"  Report saved → {out}")
 
 
@@ -198,7 +198,8 @@ def main():
     t0 = time.time()
 
     print("\n[1/3] Ingesting documents …")
-    db = ingest_documents(cases, persist_dir)
+    # db = ingest_documents(cases, persist_dir)
+    db = ManuIndex(embeddings=embeddings, client=client, model_name=LLM_MODEL, persist_directory=persist_dir)  # Load existing index
 
     print("\n[2/3] Running queries …")
     results = collect_results(db, cases)

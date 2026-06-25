@@ -18,7 +18,7 @@
 
 - Will stock shelves as needed 
 
-## **SUPERVISORY RESPONSIBILITIES:** None 
+## **SUPERVISORY RESPONSIBILITIES:**
 
 **CUSTOMER SERVICE SKILLS:** Always ensures our customers are treated in a polite and courteous manner. 
 
