@@ -7,6 +7,7 @@ from typing import List, Optional, Any
 
 import numpy as np
 
+from sklearn.metrics.pairwise import cosine_similarity
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_classic.retrievers import EnsembleRetriever
 from langchain_community.vectorstores import FAISS
@@ -29,19 +30,16 @@ class ManuIndex:
         self,
         embeddings: Any,
         client: Any,
-        model_name: str,
-        persist_directory: str = "manu_index_db",
+        persist_directory: str = "manu_index_data",
     ):
         """
         Args:
             embeddings: Embedding model used to encode text into vectors.
             client: LLM client used for generating document summaries.
-            model_name: Name of the language model to use for summarization.
             persist_directory: Directory where the index and metadata are stored.
         """
         self.embeddings = embeddings
         self.client = client
-        self.model_name = model_name
         self.persist_directory = persist_directory
 
     def add_document(
@@ -79,49 +77,41 @@ class ManuIndex:
 
         doc_id = uuid.uuid4().hex[:6]
 
-        os.makedirs(self.persist_directory, exist_ok=True)
-        chunks = self._create_semantic_chunks(
+        chunks = self._add(
             documents,
+            doc_id=doc_id,
             chunk_size=chunk_size,
             chunk_overlap=chunk_overlap,
             threshold=threshold,
         )
+
         self._lexical_store(doc_id=doc_id, documents=chunks)
 
         vector_store = FAISS.from_documents(documents=chunks, embedding=self.embeddings)
         vector_store.save_local(self.persist_directory, index_name=doc_id)
-        self._add(documents, doc_id=doc_id)
         return vector_store
 
     def search(
         self,
         query: str,
         top_k: int = 2,
-        hybrid_top_k: Optional[List[int]] = [1, 1],
-        lambda_mult: float = 0.7,
-        alpha: float = 0.5,
-        search_strategy: Optional[str] = "hybrid",
+        lambda_mult: float = 0.8,
+        alpha: float = 0.7,
+        search_strategy: Optional[str] = None,
     ) -> List[str]:
         """Retrieve relevant passages for a query.
 
         Args:
             query: Natural-language search query.
             top_k: Number of passages to return.
-            hybrid_top_k: Number of passages to return for each retrieval method in hybrid mode. [dense_top_k, sparse_top_k]
             lambda_mult: MMR diversity parameter (0 = max diversity, 1 = max relevance).
             alpha: Weight given to dense retrieval in hybrid mode (BM25 gets 1 - alpha).
             search_strategy: ``"dense"`` for vector-only, ``"sparse"`` for BM25-only,
-                             or ``"hybrid"`` (default) for both.
+                             or ``None`` (default) for hybrid.
 
         Returns:
             List of matching passage strings.
         """
-        if search_strategy not in ("hybrid", "dense", "sparse"):
-            raise ValueError("search_strategy must be 'hybrid', 'dense', or 'sparse'.")
-        
-        if search_strategy == "hybrid" and (not hybrid_top_k or len(hybrid_top_k) != 2):
-            raise ValueError("hybrid_top_k must be a list of two integers for hybrid search.")
-
         query_embedding = self.embeddings.embed_query(query)
         doc_id = self._find_collection(query_embedding)
 
@@ -142,8 +132,8 @@ class ManuIndex:
 
         # Default: hybrid
         retriever = self._hybrid_retrieval(
-            dense=self._dense_retrieval(vector_store, hybrid_top_k[0], lambda_mult),
-            sparse=self._sparse_retrieval(doc_id, hybrid_top_k[1]),
+            dense=self._dense_retrieval(vector_store, top_k, lambda_mult),
+            sparse=self._sparse_retrieval(doc_id, top_k),
             alpha=alpha,
         )
         return [doc.page_content for doc in retriever.invoke(query)]
@@ -195,14 +185,19 @@ class ManuIndex:
         if os.path.exists(self.persist_directory):
             shutil.rmtree(self.persist_directory)
 
-    def _add(self, document: str, doc_id: str) -> None:
-        """Append document routing metadata after retrieval stores are persisted."""
+    @staticmethod
+    def _normalize(v) -> list:
+        arr = np.array(v, dtype=np.float32)
+        return (arr / np.linalg.norm(arr)).tolist()
+
+    def _add(self, document: str, doc_id: str, **kwargs) -> List[Document]:
         self._create_summary(document, doc_id=doc_id)
+        return self._create_semantic_chunks(document, **kwargs)
 
     def _create_summary(self, document: str, doc_id: str) -> None:
         """Summarize a document and append the result to the metadata file."""
-        summary = DocumentSummary(document=document, client=self.client, model_name=self.model_name).summarize()
-        embedding = self.embeddings.embed_query(summary)
+        summary = DocumentSummary(document=document, client=self.client).summarize()
+        embedding = self._normalize(self.embeddings.embed_query(summary))
 
         entry = {
             "doc_id": doc_id,
@@ -215,7 +210,7 @@ class ManuIndex:
 
         existing = []
         if os.path.exists(meta_path):
-            with open(meta_path, "r", encoding="utf-8") as f:
+            with open(meta_path, "r") as f:
                 try:
                     existing = json.load(f)
                 except json.JSONDecodeError:
@@ -227,15 +222,15 @@ class ManuIndex:
     def _write_meta(self, entries: list) -> None:
         """Write metadata entries to disk with inline embedding arrays for readability."""
         meta_path = os.path.join(self.persist_directory, META_FILENAME)
-        with open(meta_path, "w", encoding="utf-8") as f:
+        with open(meta_path, "w") as f:
             f.write("[\n")
             for i, entry in enumerate(entries):
                 values_inline = json.dumps(entry["values"], separators=(", ", ": "))
                 f.write(
                     f'  {{\n'
-                    f'    "doc_id": {json.dumps(entry["doc_id"], ensure_ascii=False)},\n'
+                    f'    "doc_id": {json.dumps(entry["doc_id"])},\n'
                     f'    "values": {values_inline},\n'
-                    f'    "summary": {json.dumps(entry["summary"], ensure_ascii=False)}\n'
+                    f'    "summary": {json.dumps(entry["summary"])}\n'
                     f'  }}'
                 )
                 f.write(",\n" if i < len(entries) - 1 else "\n")
@@ -246,21 +241,18 @@ class ManuIndex:
         meta_path = os.path.join(self.persist_directory, META_FILENAME)
         if not os.path.exists(meta_path):
             raise FileNotFoundError("Metadata file not found. Has any document been indexed?")
-        with open(meta_path, "r", encoding="utf-8") as f:
+        with open(meta_path, "r") as f:
             try:
-                data = json.load(f)
+                return json.load(f)
             except json.JSONDecodeError:
                 raise ValueError("Metadata file is corrupted.")
-        if not data:
-            raise ValueError("Metadata file is empty. Has any document been indexed?")
-        return data
 
     def _find_collection(self, query_embedding) -> str:
         """Return the doc_id whose summary embedding is closest to the query."""
         data = self._load_meta()
         ids = [e["doc_id"] for e in data]
         matrix = np.array([e["values"] for e in data], dtype=np.float32)
-        query = np.array(query_embedding, dtype=np.float32)
+        query = self._normalize(query_embedding)
         scores = np.dot(matrix, query)
         return ids[int(np.argmax(scores))]
 
@@ -298,8 +290,7 @@ class ManuIndex:
         current: list[str] = [units[0]]
 
         for i in range(1, len(units)):
-            a, b = embeddings[i - 1], embeddings[i]
-            sim = np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
+            sim = cosine_similarity([embeddings[i - 1]], [embeddings[i]])[0][0]
             if sim >= threshold:
                 current.append(units[i])
             else:

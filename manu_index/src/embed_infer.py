@@ -12,7 +12,10 @@ class ONNXEmbedder(Embeddings):
             self, 
             model: str, 
             tokenizer: str, 
-            max_length: int
+            max_length: int,
+            batch_size: int = 32,
+            normalize: bool = True,
+            device: str = "cpu"
     ):
         """Embeddings class that uses an ONNX model for generating embeddings.
         
@@ -20,11 +23,23 @@ class ONNXEmbedder(Embeddings):
             model: Path to the ONNX model file.
             tokenizer: Hugging Face model name or path for the tokenizer.
             max_length: Maximum sequence length for tokenization.
+            batch_size: The number of texts to process in a single batch.
+            normalize: Whether to L2-normalize the resulting embeddings.
+            device: Device to run inference on, either 'cpu' or 'cuda'. Default is 'cpu'.
         """
+        if device == "cuda":
+            providers = ["CUDAExecutionProvider", "CPUExecutionProvider"]
+        elif device == "cpu":
+            providers = ["CPUExecutionProvider"]
+        else:
+            raise ValueError(f"Unsupported device: {device}. Choose 'cpu' or 'cuda'.")
+
         self.tokenizer = AutoTokenizer.from_pretrained(tokenizer)
-        self.session = ort.InferenceSession(model, providers=["CPUExecutionProvider"])
+        self.session = ort.InferenceSession(model, providers=providers)
         self.model = model
         self.max_length = max_length
+        self.batch_size = batch_size
+        self.normalize = normalize
 
     def __call__(self, text: str, batch_size: int = 32, normalize: bool = True) -> np.ndarray:
         return self.encode(text, batch_size=batch_size, normalize=normalize)
@@ -74,24 +89,20 @@ class ONNXEmbedder(Embeddings):
     
     def encode(
         self,
-        texts: list[str],
-        batch_size: int = 32,
-        normalize: bool = True,
+        texts: list[str]
     ) -> np.ndarray:
         """Encode a list of texts into their corresponding embeddings using the ONNX model.
         
         Args:
             texts: A list of strings to be embedded.
-            batch_size: The number of texts to process in a single batch.
-            normalize: Whether to L2-normalize the resulting embeddings.
             
         Returns:
             A NumPy array of shape (num_texts, embedding_dim) containing the embeddings.
         """
         all_embeddings: list[np.ndarray] = []
 
-        for i in range(0, len(texts), batch_size):
-            batch = texts[i : i + batch_size]
+        for i in range(0, len(texts), self.batch_size):
+            batch = texts[i : i + self.batch_size]
             inputs = self.tokenizer(
                 batch,
                 padding=True,
@@ -107,7 +118,7 @@ class ONNXEmbedder(Embeddings):
                 mask = feed["attention_mask"].astype(np.float32)[..., None]
                 emb = (emb * mask).sum(axis=1) / mask.sum(axis=1).clip(min=1e-9)
 
-            if normalize:
+            if self.normalize:
                 emb = emb / np.linalg.norm(emb, axis=1, keepdims=True)
 
             all_embeddings.append(emb)
