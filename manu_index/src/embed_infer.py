@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from typing import List
 import numpy as np
-import onnxruntime as ort
 from transformers import AutoTokenizer
 from langchain_core.embeddings import Embeddings
 
@@ -13,7 +12,7 @@ class ONNXEmbedder(Embeddings):
             model: str, 
             tokenizer: str, 
             max_length: int,
-            batch_size: int = 32,
+            batch_size: int = 16,
             normalize: bool = True,
             device: str = "cpu"
     ):
@@ -28,8 +27,14 @@ class ONNXEmbedder(Embeddings):
             device: Device to run inference on, either 'cpu' or 'cuda'. Default is 'cpu'.
         """
         if device == "cuda":
-            providers = ["CUDAExecutionProvider", "CPUExecutionProvider"]
+            import torch
+            import onnxruntime as ort
+            if not 'CUDAExecutionProvider' in ort.get_available_providers():
+                raise RuntimeError("""CUDAExecutionProvider is not available in ONNX Runtime.
+                                    `pip install onnxruntime-gpu` to enable GPU support.""")
+            providers = ["CUDAExecutionProvider"]
         elif device == "cpu":
+            import onnxruntime as ort
             providers = ["CPUExecutionProvider"]
         else:
             raise ValueError(f"Unsupported device: {device}. Choose 'cpu' or 'cuda'.")
@@ -41,7 +46,7 @@ class ONNXEmbedder(Embeddings):
         self.batch_size = batch_size
         self.normalize = normalize
 
-    def __call__(self, text: str, batch_size: int = 32, normalize: bool = True) -> np.ndarray:
+    def __call__(self, text: str, batch_size: int = 16, normalize: bool = True) -> np.ndarray:
         return self.encode(text, batch_size=batch_size, normalize=normalize)
 
     def _get_model_input_names(self) -> set[str]:
@@ -74,7 +79,7 @@ class ONNXEmbedder(Embeddings):
         Returns:
             A list of lists of floats, each representing the embedding of a document.
         """
-        return self.encode(documents, batch_size=16, normalize=True).tolist()
+        return self.encode(documents).tolist()
 
     def embed_query(self, text: str) -> List[float]:
         """Embed a single query string and return its embedding as a list of floats.
@@ -85,7 +90,7 @@ class ONNXEmbedder(Embeddings):
         Returns:
             A list of floats representing the embedding of the query.
         """
-        return self.encode([text], normalize=True)[0].tolist()
+        return self.encode([text])[0].tolist()
     
     def encode(
         self,
@@ -124,28 +129,3 @@ class ONNXEmbedder(Embeddings):
             all_embeddings.append(emb)
 
         return np.concatenate(all_embeddings, axis=0)
-
-
-if __name__ == "__main__":
-    import time
-    start = time.time()
-    MODEL_DIR = 'onnx_models/embeddinggemma_300m/onnx/model_q4.onnx'
-    TOKENIZER_DIR = 'onnx_models/embeddinggemma_300m'
-    MAX_LENGTH = 768
-
-    sentences = [
-        "FastEmbed is lighter than Transformers & Sentence-Transformers.",
-        "FastEmbed is supported and maintained by Qdrant.",
-        "My name is Tushar and I am a software developer.",
-    ]
-
-    embedder = ONNXEmbedder(MODEL_DIR, TOKENIZER_DIR, MAX_LENGTH)
-    embeddings = embedder.embed_documents(sentences)
-
-    print("Shape  :", embeddings.shape)
-    print("Sample :", embeddings[0][:5].tolist())
-
-    # Compute similarity between first two sentences
-    sim = np.dot(embeddings[0], embeddings[1])
-    print(f"Similarity between sentence 1 and 2: {sim:.4f}")
-    print(f"Time taken: {time.time() - start:.2f} seconds")

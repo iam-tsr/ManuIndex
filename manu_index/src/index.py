@@ -1,13 +1,14 @@
 import json
+import os
 import pickle
 import shutil
 import uuid
-import os
-from typing import List, Optional, Any
+from typing import Any, List
 
 import numpy as np
 
-from sklearn.metrics.pairwise import cosine_similarity
+from openai import OpenAI
+
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_classic.retrievers import EnsembleRetriever
 from langchain_community.vectorstores import FAISS
@@ -15,8 +16,11 @@ from langchain_core.documents import Document
 from langchain_community.retrievers import BM25Retriever
 
 from manu_index.src.summary import DocumentSummary
+from manu_index.src.embed_infer import ONNXEmbedder
+from manu_index.src.reranker_infer import ONNXReranker
 
 META_FILENAME = "_meta.json"
+RETRIEVAL_TOP_K = 3
 
 
 class ManuIndex:
@@ -28,26 +32,27 @@ class ManuIndex:
 
     def __init__(
         self,
-        embeddings: Any,
-        client: Any,
-        persist_directory: str = "manu_index_data",
+        client: OpenAI,
+        model_name: str,
+        embeddings: ONNXEmbedder,
+        persist_directory: str = "manu_index_db"
     ):
         """
         Args:
             embeddings: Embedding model used to encode text into vectors.
             client: LLM client used for generating document summaries.
+            model_name: Name of the language model to use.
             persist_directory: Directory where the index and metadata are stored.
         """
         self.embeddings = embeddings
         self.client = client
+        self.model_name = model_name
         self.persist_directory = persist_directory
 
     def add_document(
         self,
         documents: str | bytes,
-        chunk_size: int = 120,
-        chunk_overlap: int = 0,
-        threshold: float = 0.7,
+        chunk_size: int = 500
     ) -> FAISS:
         """Ingest a document into the index.
 
@@ -57,10 +62,7 @@ class ManuIndex:
         Args:
             documents: Raw document content — a UTF-8 string, bytes, or a path
                        to a Markdown file.
-            chunk_size: Maximum character size of each initial (pre-semantic) chunk.
-            chunk_overlap: Character overlap between adjacent initial chunks.
-            threshold: Cosine-similarity threshold for the semantic chunking step.
-                       Adjacent chunks below this value trigger a new chunk boundary.
+            chunk_size: Maximum size of chunks to create from the document.
 
         Returns:
             The FAISS vector store created for this document.
@@ -77,14 +79,8 @@ class ManuIndex:
 
         doc_id = uuid.uuid4().hex[:6]
 
-        chunks = self._add(
-            documents,
-            doc_id=doc_id,
-            chunk_size=chunk_size,
-            chunk_overlap=chunk_overlap,
-            threshold=threshold,
-        )
-
+        self._create_summary(document, doc_id=doc_id)
+        chunks = self._deterministic_splitter(document, **kwargs)
         self._lexical_store(doc_id=doc_id, documents=chunks)
 
         vector_store = FAISS.from_documents(documents=chunks, embedding=self.embeddings)
@@ -94,49 +90,55 @@ class ManuIndex:
     def search(
         self,
         query: str,
+        reranker: ONNXReranker,
         top_k: int = 2,
-        lambda_mult: float = 0.8,
-        alpha: float = 0.7,
-        search_strategy: Optional[str] = None,
+        top_c: int = 3,
+        lambda_mult: float = 0.7,
+        alpha: float = 0.5,
     ) -> List[str]:
         """Retrieve relevant passages for a query.
 
         Args:
             query: Natural-language search query.
+            reranker: Reranking model used to re-rank retrieved documents.
             top_k: Number of passages to return.
+            top_c: Number of collections to retrieve from before reranking.
             lambda_mult: MMR diversity parameter (0 = max diversity, 1 = max relevance).
             alpha: Weight given to dense retrieval in hybrid mode (BM25 gets 1 - alpha).
-            search_strategy: ``"dense"`` for vector-only, ``"sparse"`` for BM25-only,
-                             or ``None`` (default) for hybrid.
 
         Returns:
             List of matching passage strings.
         """
         query_embedding = self.embeddings.embed_query(query)
-        doc_id = self._find_collection(query_embedding)
+        doc_ids = self._find_collections(query_embedding, top_c=top_c)
 
-        vector_store = FAISS.load_local(
-            folder_path=self.persist_directory,
-            embeddings=self.embeddings,
-            index_name=doc_id,
-            allow_dangerous_deserialization=True,
-        )
+        candidates: list[Document] = []
 
-        if search_strategy == "dense":
-            retriever = self._dense_retrieval(vector_store, top_k, lambda_mult)
-            return [doc.page_content for doc in retriever.invoke(query)]
+        for doc_id in doc_ids:
+            vector_store = FAISS.load_local(
+                folder_path=self.persist_directory,
+                embeddings=self.embeddings,
+                index_name=doc_id,
+                allow_dangerous_deserialization=True,
+            )
 
-        if search_strategy == "sparse":
-            retriever = self._sparse_retrieval(doc_id, top_k)
-            return [doc.page_content for doc in retriever.invoke(query)]
+            retriever = self._hybrid_retrieval(
+                dense=self._dense_retrieval(vector_store, RETRIEVAL_TOP_K, lambda_mult),
+                sparse=self._sparse_retrieval(doc_id, RETRIEVAL_TOP_K),
+                alpha=alpha,
+            )
+            chunks_by_index = self._documents_by_chunk_index(vector_store)
+            retrieved_chunks = retriever.invoke(query)
+            candidates.extend(
+                self._neighbour_chunking(retrieved_chunks, chunks_by_index)
+            )
 
-        # Default: hybrid
-        retriever = self._hybrid_retrieval(
-            dense=self._dense_retrieval(vector_store, top_k, lambda_mult),
-            sparse=self._sparse_retrieval(doc_id, top_k),
-            alpha=alpha,
-        )
-        return [doc.page_content for doc in retriever.invoke(query)]
+        candidate_texts = self._dedupe_page_content(candidates)
+        if not candidate_texts:
+            return []
+
+        ranked_documents = reranker.rerank(query=query, documents=candidate_texts)
+        return [document for document, _score in ranked_documents[:top_k]]
 
     def info(self) -> List[dict]:
         """Return metadata (doc_id and summary) for every indexed document.
@@ -185,19 +187,10 @@ class ManuIndex:
         if os.path.exists(self.persist_directory):
             shutil.rmtree(self.persist_directory)
 
-    @staticmethod
-    def _normalize(v) -> list:
-        arr = np.array(v, dtype=np.float32)
-        return (arr / np.linalg.norm(arr)).tolist()
-
-    def _add(self, document: str, doc_id: str, **kwargs) -> List[Document]:
-        self._create_summary(document, doc_id=doc_id)
-        return self._create_semantic_chunks(document, **kwargs)
-
     def _create_summary(self, document: str, doc_id: str) -> None:
         """Summarize a document and append the result to the metadata file."""
-        summary = DocumentSummary(document=document, client=self.client).summarize()
-        embedding = self._normalize(self.embeddings.embed_query(summary))
+        summary = DocumentSummary(document=document, client=self.client, model_name=self.model_name).summarize()
+        embedding = self.embeddings.embed_query(summary)
 
         entry = {
             "doc_id": doc_id,
@@ -247,14 +240,15 @@ class ManuIndex:
             except json.JSONDecodeError:
                 raise ValueError("Metadata file is corrupted.")
 
-    def _find_collection(self, query_embedding) -> str:
-        """Return the doc_id whose summary embedding is closest to the query."""
+    def _find_collections(self, query_embedding, top_c: int) -> list[str]:
+        """Return the top ``top_c`` doc_ids whose summaries are closest to the query."""
         data = self._load_meta()
         ids = [e["doc_id"] for e in data]
         matrix = np.array([e["values"] for e in data], dtype=np.float32)
-        query = self._normalize(query_embedding)
-        scores = np.dot(matrix, query)
-        return ids[int(np.argmax(scores))]
+        scores = np.dot(matrix, query_embedding)
+        collection_count = max(1, min(top_c, len(ids)))
+        top_indices = np.argsort(scores)[::-1][:collection_count]
+        return [ids[int(i)] for i in top_indices]
 
     def _lexical_store(self, doc_id: str, documents: List[Document]) -> None:
         """Build a BM25 retriever from documents and persist it to disk."""
@@ -264,7 +258,7 @@ class ManuIndex:
         with open(bm25_path, "wb") as f:
             pickle.dump(bm25_retriever, f)
 
-    def _create_semantic_chunks(
+    def _semantic_chunking(
         self,
         document: str,
         chunk_size: int,
@@ -278,6 +272,7 @@ class ManuIndex:
             2. Encode all units in one batch.
             3. Merge adjacent units whose cosine similarity meets ``threshold``.
         """
+        raise NotImplementedError("This method is Deprecated. Use `deterministic_chunking` instead.")
         splitter = RecursiveCharacterTextSplitter(
             chunk_size=chunk_size,
             chunk_overlap=chunk_overlap,
@@ -299,6 +294,100 @@ class ManuIndex:
 
         chunks.append(" ".join(current))
         return [Document(page_content=chunk) for chunk in chunks]
+    
+    def _deterministic_splitter(
+        self,
+        document: str,
+        chunk_size: int,
+    ) -> list[Document]:
+        text_splitter = RecursiveCharacterTextSplitter(
+            chunk_size=chunk_size,
+            chunk_overlap=0,
+            separators=["\n\n", "\n", " "],
+        )
+
+        documents: list[Document] = []
+        chunk_index = 0
+
+        for piece in text_splitter.split_text(document):
+            if not piece.strip():
+                continue
+
+            metadata: dict[str, Any] = {"chunk_index": chunk_index}
+            documents.append(Document(page_content=piece, metadata=metadata))
+            chunk_index += 1
+
+        return documents
+
+    def _documents_by_chunk_index(self, vector_store: FAISS) -> dict[int, Document]:
+        """Return all documents from a FAISS store keyed by deterministic chunk index."""
+        docstore = getattr(vector_store, "docstore", None)
+        stored_documents = getattr(docstore, "_dict", {}).values()
+        chunks_by_index: dict[int, Document] = {}
+
+        for document in stored_documents:
+            chunk_index = document.metadata.get("chunk_index")
+            if chunk_index is None:
+                continue
+            chunks_by_index[int(chunk_index)] = document
+
+        return chunks_by_index
+
+    def _neighbour_chunking(
+        self,
+        documents: list[Document],
+        chunks_by_index: dict[int, Document],
+    ) -> list[Document]:
+        """Merge retrieved chunks with neighbours while avoiding overlapping output.
+
+        Retrieval can return adjacent chunks such as 4, 5, and 6. Expanding each
+        seed independently would duplicate text across neighbouring windows, so
+        this method only emits chunk indices that have not been emitted before.
+        """
+        expanded_documents: list[Document] = []
+        used_chunk_indices: set[int] = set()
+
+        for document in documents:
+            chunk_index = document.metadata.get("chunk_index")
+            if chunk_index is None:
+                expanded_documents.append(document)
+                continue
+
+            chunk_index = int(chunk_index)
+            if chunk_index in used_chunk_indices:
+                continue
+
+            neighbour_indices = [
+                index
+                for index in (chunk_index - 1, chunk_index, chunk_index + 1)
+                if index in chunks_by_index and index not in used_chunk_indices
+            ]
+            if not neighbour_indices:
+                continue
+
+            page_content = "\n".join(
+                chunks_by_index[index].page_content for index in neighbour_indices
+            )
+            metadata = dict(document.metadata)
+            metadata["chunk_indices"] = neighbour_indices
+            expanded_documents.append(Document(page_content=page_content, metadata=metadata))
+            used_chunk_indices.update(neighbour_indices)
+
+        return expanded_documents
+
+    def _dedupe_page_content(self, documents: list[Document]) -> list[str]:
+        """Return unique document text while preserving retrieval order."""
+        seen: set[str] = set()
+        unique_documents: list[str] = []
+
+        for document in documents:
+            page_content = document.page_content
+            if page_content in seen:
+                continue
+            seen.add(page_content)
+            unique_documents.append(page_content)
+
+        return unique_documents
 
     def _dense_retrieval(self, vector_store: FAISS, top_k: int, lambda_mult: float):
         return vector_store.as_retriever(
