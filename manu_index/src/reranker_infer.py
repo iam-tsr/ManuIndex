@@ -37,7 +37,7 @@ class ONNXReranker:
             if not 'CUDAExecutionProvider' in ort.get_available_providers():
                 raise RuntimeError("""CUDAExecutionProvider is not available in ONNX Runtime.
                                     `pip install onnxruntime-gpu` to enable GPU support.""")
-            providers = ["CUDAExecutionProvider"]
+            providers = ["CUDAExecutionProvider", "CPUExecutionProvider"]
         elif device == "cpu":
             import onnxruntime as ort
             providers = ["CPUExecutionProvider"]
@@ -50,10 +50,13 @@ class ONNXReranker:
             tokenizer_kwargs["padding_side"] = "left"
             tokenizer_kwargs["fix_mistral_regex"] = True
 
+        session_options = ort.SessionOptions()
+        session_options.log_severity_level = 4
+
         self.tokenizer = AutoTokenizer.from_pretrained(tokenizer, **tokenizer_kwargs)
         if hasattr(self.tokenizer, "deprecation_warnings"):
             self.tokenizer.deprecation_warnings["Asking-to-pad-a-fast-tokenizer"] = True
-        self.session = ort.InferenceSession(model, providers=providers)
+        self.session = ort.InferenceSession(model, sess_options=session_options, providers=providers)
         self.model = model
         self.max_length = max_length
         self.batch_size = batch_size

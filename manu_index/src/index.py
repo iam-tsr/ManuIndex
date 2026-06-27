@@ -79,8 +79,8 @@ class ManuIndex:
 
         doc_id = uuid.uuid4().hex[:6]
 
-        self._create_summary(document, doc_id=doc_id)
-        chunks = self._deterministic_splitter(document, **kwargs)
+        self._create_summary(documents, doc_id=doc_id)
+        chunks = self._deterministic_splitter(documents, chunk_size=chunk_size)
         self._lexical_store(doc_id=doc_id, documents=chunks)
 
         vector_store = FAISS.from_documents(documents=chunks, embedding=self.embeddings)

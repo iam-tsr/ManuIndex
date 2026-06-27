@@ -3,7 +3,7 @@ import uuid
 from dotenv import load_dotenv
 
 from openai import OpenAI
-from manu_index import ManuIndex, ONNXEmbedder
+from manu_index import ManuIndex, ONNXEmbedder, ONNXReranker
 
 load_dotenv()
 client = OpenAI(
@@ -12,41 +12,45 @@ client = OpenAI(
 )
 MODEL_NAME = os.getenv("OPENAI_MODEL_NAME")
 
-MODEL_DIR = 'onnx_models/qwen3_embedding_0dot6b/onnx/model_q4.onnx'
-TOKENIZER_DIR = 'onnx_models/qwen3_embedding_0dot6b'
+EMB_MODEL = 'onnx_models/bge_m3/onnx/model_q4.onnx'
+EMD_TOKENIZER = 'onnx_models/bge_m3'
+RRNK_MODEL = 'onnx_models/bge_reranker_v2_m3/onnx/model_q4.onnx'
+RRNK_TOKENIZER = 'onnx_models/bge_reranker_v2_m3'
 MAX_LENGTH = 1024
 
-embeddings = ONNXEmbedder(MODEL_DIR, TOKENIZER_DIR, MAX_LENGTH)
-db = ManuIndex(embeddings=embeddings, client=client, model_name=MODEL_NAME, persist_directory="temp_index")
+embeddings = ONNXEmbedder(EMB_MODEL, EMD_TOKENIZER, MAX_LENGTH, device="cpu")
+reranker = ONNXReranker(RRNK_MODEL, RRNK_TOKENIZER, MAX_LENGTH, device="cuda")
+db = ManuIndex(client, MODEL_NAME, embeddings)
 
 def test_add_document():
-    document = "./tests/examples/sample.md"
+    document = "./tests/examples/sample4.md"
     
     db.add_document(
-        documents=document,
-        chunk_size = 130,
-        chunk_overlap = 0,
-        threshold = 0.7
+        documents=document
     )
 
-def test_clear_index():
-    db.clear()
-
 def test_search():
-    query = "What happens to nerve cells in a baby's brain during early development?"
+    query = "What are the three elements of the Fraud Triangle theory of corruption?"
     doc_list = db.search(
         query=query,
-        hybrid_top_k=[1,1],
-        lambda_mult=0.7,
-        alpha=0.5,
+        reranker=reranker,
     )
     print("Number of documents retrieved:", len(doc_list))
     return doc_list
 
-# Subsequent tests to retrieval and other functionalities of the ManuIndex.
-def test_summary_creation():
-    with open("./tests/examples/sample.md", "r") as f:
-        document = f.read()
+if __name__ == "__main__":
+    # test_add_document()
 
-    summary = db._create_summary(document=document, doc_id=str(uuid.uuid4().hex[:6]))
-    assert summary is None
+    docs = test_search()
+    print(docs)
+    # query = "What are the three elements of the Fraud Triangle theory of corruption?"
+    # context_block = "\n\n".join(docs)
+    # response = client.chat.completions.create(
+    #     model=MODEL_NAME,
+    #     messages=[
+    #         {"role": "system", "content": "Answer the question using only the provided context. Be concise — no markdown, no headers, no bullet points. If the context does not contain the answer, say 'I cannot answer based on the given context.'."},
+    #         {"role": "user", "content": f"Context:\n{context_block}\n\nQuestion: {query}"},
+    #     ],
+    #     temperature=0,
+    # )
+    # print(response.choices[0].message.content.strip())
