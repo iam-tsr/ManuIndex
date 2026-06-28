@@ -1,8 +1,0 @@
-{
-  "ragas": {
-    "faithfulness": 0.9126357560568088,
-    "answer_relevancy": 0.7574922359657518,
-    "context_precision": 0.66865546212521,
-    "context_recall": 0.6755401129943503
-  }
-}
