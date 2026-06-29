@@ -329,6 +329,12 @@ This repository is the implementation core for GRAG. It contains the retrieval m
 
 A RAG system can become more reliable on heterogeneous document collections by improving retrieval granularity and routing structure, rather than relying only on longer prompts or larger generation models.
 
+## License
+
+ManuIndex is licensed under MIT. See the [LICENSE](https://github.com/iam-tsr/ManuIndex/blob/main/LICENSE) file for details.
+
 ---
 
-Made with passion by TSR.
+<div style="text-align:center">
+made with passion by TSR ;)
+</div>
