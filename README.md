@@ -1,6 +1,6 @@
-# ManuIndex
+<img src="public/banner.png" alt="ManuIndex" width="100%">
 
-Core implementation for the GRAG (Granular Retrieval-Augmented Generation) research project.
+# ManuIndex - core implementation for the GRAG (Granular Retrieval-Augmented Generation) research project
 
 ManuIndex is a document-aware retrieval engine for the "document zoo" problem in RAG: real corpora contain many heterogeneous documents, but flat vector databases mix all chunks into one retrieval space. ManuIndex separates document routing from chunk retrieval so a query first selects the most relevant document collections, then searches only inside those collections with hybrid dense/sparse retrieval and reranking.
 
