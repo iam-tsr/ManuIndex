@@ -12,7 +12,7 @@ class ONNXReranker:
             model: str, 
             tokenizer: str, 
             max_length: int,
-            batch_size: int = 16,
+            batch_size: int = 8,
             normalize: bool = True,
             device: str = "cpu",
             reranker_type: str = "auto",
@@ -36,7 +36,7 @@ class ONNXReranker:
             import onnxruntime as ort
             if not 'CUDAExecutionProvider' in ort.get_available_providers():
                 raise RuntimeError("""CUDAExecutionProvider is not available in ONNX Runtime.
-                                    `pip install onnxruntime-gpu` to enable GPU support.""")
+                                    `pip install "optimum[onnxruntime-gpu]"` to enable GPU support.""")
             providers = ["CUDAExecutionProvider", "CPUExecutionProvider"]
         elif device == "cpu":
             import onnxruntime as ort
@@ -275,6 +275,3 @@ class ONNXReranker:
         scored_results = list(zip(documents, all_scores))
         
         return sorted(scored_results, key=lambda x: x[1], reverse=True)
-
-    def rerank_batched(self, query: str, documents: list[str]) -> list[tuple[str, float]]:
-        return self.rerank(query, documents)

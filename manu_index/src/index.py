@@ -20,7 +20,9 @@ from manu_index.src.embed_infer import ONNXEmbedder
 from manu_index.src.reranker_infer import ONNXReranker
 
 META_FILENAME = "_meta.json"
-RETRIEVAL_TOP_K = 3
+DENSE_INDEX_SUFFIX = "dnse"
+SPARSE_INDEX_SUFFIX = "spr.pkl"
+DOC_TOP_K = 5
 
 
 class ManuIndex:
@@ -84,16 +86,16 @@ class ManuIndex:
         self._lexical_store(doc_id=doc_id, documents=chunks)
 
         vector_store = FAISS.from_documents(documents=chunks, embedding=self.embeddings)
-        vector_store.save_local(self.persist_directory, index_name=doc_id)
+        vector_store.save_local(self.persist_directory, index_name=self._dense_index_name(doc_id))
         return vector_store
 
     def search(
         self,
         query: str,
         reranker: ONNXReranker,
-        top_k: int = 2,
-        top_c: int = 3,
-        lambda_mult: float = 0.7,
+        top_k: int = 3,
+        top_c: int = 5,
+        lambda_mult: float = 0.8,
         alpha: float = 0.5,
     ) -> List[str]:
         """Retrieve relevant passages for a query.
@@ -118,13 +120,13 @@ class ManuIndex:
             vector_store = FAISS.load_local(
                 folder_path=self.persist_directory,
                 embeddings=self.embeddings,
-                index_name=doc_id,
+                index_name=self._dense_index_name(doc_id),
                 allow_dangerous_deserialization=True,
             )
 
             retriever = self._hybrid_retrieval(
-                dense=self._dense_retrieval(vector_store, RETRIEVAL_TOP_K, lambda_mult),
-                sparse=self._sparse_retrieval(doc_id, RETRIEVAL_TOP_K),
+                dense=self._dense_retrieval(vector_store, DOC_TOP_K, lambda_mult),
+                sparse=self._sparse_retrieval(doc_id, DOC_TOP_K),
                 alpha=alpha,
             )
             chunks_by_index = self._documents_by_chunk_index(vector_store)
@@ -160,13 +162,14 @@ class ManuIndex:
             doc_id: The document identifier returned when the document was added.
         """
         # Remove FAISS index files
-        for filename in os.listdir(self.persist_directory):
-            is_index_file = filename.endswith(".index") or filename.endswith(".faiss")
-            if filename.startswith(doc_id) and is_index_file:
-                os.remove(os.path.join(self.persist_directory, filename))
+        dense_index_name = self._dense_index_name(doc_id)
+        for filename in (f"{dense_index_name}.faiss", f"{dense_index_name}.pkl"):
+            dense_path = os.path.join(self.persist_directory, filename)
+            if os.path.exists(dense_path):
+                os.remove(dense_path)
 
         # Remove BM25 pickle
-        bm25_path = os.path.join(self.persist_directory, f"{doc_id}_tsr.pkl")
+        bm25_path = self._sparse_index_path(doc_id)
         if os.path.exists(bm25_path):
             os.remove(bm25_path)
 
@@ -240,6 +243,14 @@ class ManuIndex:
             except json.JSONDecodeError:
                 raise ValueError("Metadata file is corrupted.")
 
+    def _dense_index_name(self, doc_id: str) -> str:
+        """Return the FAISS index name for a document."""
+        return f"{doc_id}{DENSE_INDEX_SUFFIX}"
+
+    def _sparse_index_path(self, doc_id: str) -> str:
+        """Return the BM25 pickle path for a document."""
+        return os.path.join(self.persist_directory, f"{doc_id}{SPARSE_INDEX_SUFFIX}")
+
     def _find_collections(self, query_embedding, top_c: int) -> list[str]:
         """Return the top ``top_c`` doc_ids whose summaries are closest to the query."""
         data = self._load_meta()
@@ -254,7 +265,7 @@ class ManuIndex:
         """Build a BM25 retriever from documents and persist it to disk."""
         bm25_retriever = BM25Retriever.from_documents(documents)
 
-        bm25_path = os.path.join(self.persist_directory, f"{doc_id}_tsr.pkl")
+        bm25_path = self._sparse_index_path(doc_id)
         with open(bm25_path, "wb") as f:
             pickle.dump(bm25_retriever, f)
 
@@ -396,7 +407,7 @@ class ManuIndex:
         )
 
     def _sparse_retrieval(self, doc_id: str, top_k: int):
-        bm25_path = os.path.join(self.persist_directory, f"{doc_id}_tsr.pkl")
+        bm25_path = self._sparse_index_path(doc_id)
         with open(bm25_path, "rb") as f:
             retriever = pickle.load(f)
         retriever.k = top_k

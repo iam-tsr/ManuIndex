@@ -12,7 +12,7 @@ class ONNXEmbedder(Embeddings):
             model: str, 
             tokenizer: str, 
             max_length: int,
-            batch_size: int = 16,
+            batch_size: int = 8,
             normalize: bool = True,
             device: str = "cpu"
     ):
@@ -31,7 +31,7 @@ class ONNXEmbedder(Embeddings):
             import onnxruntime as ort
             if not 'CUDAExecutionProvider' in ort.get_available_providers():
                 raise RuntimeError("""CUDAExecutionProvider is not available in ONNX Runtime.
-                                    `pip install onnxruntime-gpu` to enable GPU support.""")
+                                    `pip install "optimum[onnxruntime-gpu]"` to enable GPU support.""")
             providers = ["CUDAExecutionProvider", "CPUExecutionProvider"]
         elif device == "cpu":
             import onnxruntime as ort
@@ -49,8 +49,8 @@ class ONNXEmbedder(Embeddings):
         self.batch_size = batch_size
         self.normalize = normalize
 
-    def __call__(self, text: str, batch_size: int = 16, normalize: bool = True) -> np.ndarray:
-        return self.encode(text, batch_size=batch_size, normalize=normalize)
+    def __call__(self, texts: list[str]) -> np.ndarray:
+        return self.encode(texts)
 
     def _get_model_input_names(self) -> set[str]:
         return {inp.name for inp in self.session.get_inputs()}

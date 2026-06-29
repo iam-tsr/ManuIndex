@@ -58,7 +58,7 @@ class DocumentSummary:
                 {"role": "user", "content": JUDGE_PROMPT.format(titles="\n".join(titles))},
             ],
             temperature=0,
-            max_tokens=1024, # Some models may have a lower max token limit, so keeping it at 1024 to be safe
+            max_tokens=256, # Some models may have a lower max token limit, so keeping it at 256 to be safe
         )
         content = response.choices[0].message.content
         return content.strip().lower() == "true"
