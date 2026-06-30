@@ -276,29 +276,7 @@ This is useful for document-zoo corpora where important evidence may be embedded
 
 ## Benchmark
 
-The benchmark compares GRAG/ManuIndex against a Naive RAG baseline on the same 25-document, 125-question evaluation corpus with the same retrieval budget:
-
-| Setting | Value |
-| --- | --- |
-| Documents | 25 |
-| Questions | 125 |
-| Top-k | 3 |
-| Chunk size | 500 |
-
-The saved reports now cover four embedding/generator combinations:
-
-| Embeddings | Generator |
-| --- | --- |
-| BGE-M3 | Gemma-4-E2B |
-| BGE-M3 | Qwen3.5-2B |
-| Qwen3-Embedding | Gemma-4-E2B |
-| Qwen3-Embedding | Qwen3.5-2B |
-
-For each combination, the benchmark compares three retrieval variants:
-
-- Naive RAG
-- GRAG
-- GRAG + reranker
+The benchmark compares GRAG/ManuIndex against a Naive RAG baseline on the same 25-document, 125-question evaluation corpus with the same retrieval budget.
 
 This repository-level summary focuses on two numbers:
 
