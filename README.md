@@ -307,20 +307,7 @@ This repository-level summary focuses on two numbers:
 
 Results across the full report matrix:
 
-| Embeddings | Generator | Naive CR | Naive F1 | GRAG CR | GRAG F1 | GRAG + reranker CR | GRAG + reranker F1 |
-| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| BGE-M3 | Gemma-4-E2B | 0.8204 | 0.7174 | 0.8466 | 0.7328 | 0.9205 | **0.7869** |
-| BGE-M3 | Qwen3.5-2B | 0.8157 | 0.8484 | 0.8874 | 0.8843 | 0.9296 | **0.9236** |
-| Qwen3-Embedding | Gemma-4-E2B | 0.8129 | 0.7274 | 0.8130 | 0.7181 | 0.9184 | **0.7872** |
-| Qwen3-Embedding | Qwen3.5-2B | 0.8497 | 0.8728 | 0.8745 | 0.8753 | 0.9223 | **0.9186** |
-
-Average results across all four configurations:
-
-| System | Average CR | Average F1 |
-| --- | ---: | ---: |
-| Naive RAG | 0.8247 | 0.7915 |
-| GRAG | 0.8554 | 0.8026 |
-| GRAG + reranker | **0.9227** | **0.8541** |
+![alt text](public/table.png)
 
 Main interpretation:
 
