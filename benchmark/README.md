@@ -1,34 +1,30 @@
 # Benchmark Analysis
 
-This benchmark suite compares the GRAG retrieval pipeline against a Naive RAG baseline on a mixed-document evaluation set. The goal is to measure whether improved document-aware retrieval produces better grounded answers without changing the generation setup.
+This benchmark suite compares the GRAG retrieval pipeline against a Naive RAG baseline on a mixed-document evaluation set. The goal is to measure whether improved document-aware retrieval produces better grounded answers without changing the evaluation corpus or the top-level retrieval budget.
 
 ## Purpose
 
-The benchmark is designed to test retrieval quality across a broad "document zoo" rather than only clean prose. The evaluation set includes job descriptions, religious essays, press releases, meeting minutes, regulatory and policy documents, privacy policies, clinical and research material, bus schedules, school safety plans, and other heterogeneous document types.
+The benchmark is designed to stress retrieval over a broad “document zoo” rather than only clean prose. The evaluation set includes job descriptions, religious essays, press releases, meeting minutes, regulatory and policy documents, privacy policies, clinical and research material, bus schedules, school safety plans, and other heterogeneous document types.
 
-The analysis focuses on whether the retrieval system can:
-
-- Find exact facts such as dates, names, roles, prices, vote counts, and regulatory details.
-- Preserve document-local context when questions depend on nearby clauses or sections.
-- Avoid mixing unrelated content from different documents.
-- Support answer generation with concise, grounded evidence.
-- Improve recall while maintaining precision and faithfulness.
+The main question is whether retrieval can surface the right evidence for exact factual answers across mixed document structures.
 
 ## Systems Compared
 
-### GRAG
-
-GRAG uses the ManuIndex retrieval stack with ONNX BGE-M3 embeddings and an ONNX BGE reranker. It retrieves multiple ranked contexts for each question and passes those contexts to the answer generator.
-
 ### Naive RAG
 
-The baseline uses fixed-size text chunks, FAISS similarity search, and the same embedding model family. It retrieves the top matching chunks directly from a flat vector index and passes the retrieved text to the answer generator.
+The baseline uses fixed-size text chunks, flat similarity search, and top-k chunk retrieval.
+
+### GRAG
+
+GRAG first routes the query to the most relevant document collections and then retrieves evidence within those collections.
+
+### GRAG + reranker
+
+This is the full GRAG pipeline with an additional reranking stage applied to the retrieved evidence before answer generation.
 
 ## Shared Evaluation Setup
 
-Both systems use the same question set, same source documents, same top-k setting, same chunk-size setting, same embedding model family, and same answer-generation prompt. This keeps the comparison focused on retrieval behavior rather than differences in the generator or evaluation data.
-
-Current shared configuration:
+All reports use the same evaluation corpus and the same retrieval budget:
 
 | Setting | Value |
 | --- | --- |
@@ -36,68 +32,77 @@ Current shared configuration:
 | Documents | 25 |
 | Top-k | 3 |
 | Chunk size | 500 |
-| Embedding model | BGE-M3 ONNX Q4 |
-| Generator | Gemma-4-E2B GGUF Q4 |
 
-## Metrics
+What varies across the saved reports is the embedding backend, the generator, and whether reranking is enabled.
 
-The benchmark uses RAGAS-style metrics to evaluate both answer quality and retrieval quality.
+## Report Matrix
 
-| Metric | What it measures |
+The saved reports cover four embedding/generator combinations:
+
+| Embeddings | Generator |
 | --- | --- |
-| Faithfulness | Whether the generated answer is supported by retrieved context. |
-| Answer relevancy | Whether the answer directly addresses the question. |
-| Context precision | Whether retrieved contexts are useful and not noisy. |
-| Context recall | Whether retrieved contexts contain the information needed to answer. |
-| Answer correctness | Whether the generated answer matches the expected answer. |
+| BGE-M3 | Gemma-4-E2B |
+| BGE-M3 | Qwen3.5-2B |
+| Qwen3-Embedding | Gemma-4-E2B |
+| Qwen3-Embedding | Qwen3.5-2B |
 
-## Aggregate Results
+For each combination there are three system variants: Naive RAG, GRAG, and GRAG + reranker.
 
-| Metric | GRAG (Our) | Naive RAG | Absolute gain | Relative gain |
-| --- | ---: | ---: | ---: | ---: |
-| Faithfulness | **0.9799** | 0.9408 | +0.0391 | +4.15% |
-| Answer relevancy | **0.8332** | 0.7993 | +0.0339 | +4.24% |
-| Context precision | **0.8547** | 0.8240 | +0.0307 | +3.72% |
-| Context recall | **0.9205** | 0.8204 | +0.1001 | +12.20% |
-| Answer correctness | **0.6872** | 0.6374 | +0.0498 | +7.81% |
+## Metrics Used Here
+
+This summary reports only two numbers:
+
+- CR = context recall
+- F1 = the harmonic mean of precision and recall
+
+This keeps the analysis focused on retrieval completeness plus a single combined quality score, without surfacing the rest of the metric set.
+
+## CR and F1 Results
+
+| Embeddings | Generator | Naive CR | Naive F1 | GRAG CR | GRAG F1 | GRAG + reranker CR | GRAG + reranker F1 | Best F1 |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| BGE-M3 | Gemma-4-E2B | 0.8204 | 0.7174 | 0.8466 | 0.7328 | 0.9205 | **0.7869** | GRAG + reranker |
+| BGE-M3 | Qwen3.5-2B | 0.8157 | 0.8484 | 0.8874 | 0.8843 | 0.9296 | **0.9236** | GRAG + reranker |
+| Qwen3-Embedding | Gemma-4-E2B | 0.8129 | 0.7274 | 0.8130 | 0.7181 | 0.9184 | **0.7872** | GRAG + reranker |
+| Qwen3-Embedding | Qwen3.5-2B | 0.8497 | 0.8728 | 0.8745 | 0.8753 | 0.9223 | **0.9186** | GRAG + reranker |
+
+Average CR and F1 across all four report configurations:
+
+| System | Average CR | Average F1 |
+| --- | ---: | ---: |
+| Naive RAG | 0.8247 | 0.7915 |
+| GRAG | 0.8554 | 0.8026 |
+| GRAG + reranker | **0.9227** | **0.8541** |
 
 ## Main Findings
 
-GRAG outperforms the Naive RAG baseline on every reported metric. The largest improvement is in context recall, which suggests that GRAG retrieves more of the information needed to answer each question. This is important for heterogeneous documents where relevant evidence may be separated by formatting, section boundaries, tables, lists, or document-specific structure.
+The consistent result across the full report set is that GRAG + reranker is the strongest system in every configuration.
 
-The gains in answer correctness and answer relevancy indicate that better retrieval also improves generation quality. The generator receives stronger evidence, so it is more likely to produce complete and directly useful answers.
+Compared against Naive RAG, GRAG + reranker improves both CR and F1 in all four embedding/generator combinations:
 
-The faithfulness score is high for both systems, but GRAG still improves it. This suggests that GRAG does not merely retrieve more text; it retrieves context that remains relevant enough for grounded answer generation.
+| Embeddings | Generator | CR gain vs Naive | F1 gain vs Naive | F1 relative gain |
+| --- | --- | ---: | ---: | ---: |
+| BGE-M3 | Gemma-4-E2B | +0.1001 | +0.0695 | +9.69% |
+| BGE-M3 | Qwen3.5-2B | +0.1139 | +0.0751 | +8.86% |
+| Qwen3-Embedding | Gemma-4-E2B | +0.1054 | +0.0599 | +8.23% |
+| Qwen3-Embedding | Qwen3.5-2B | +0.0726 | +0.0457 | +5.24% |
 
-## Retrieval Behavior Analysis
+Average improvement over Naive RAG:
 
-The Naive RAG baseline often retrieves broad chunks that contain some relevant information but may miss neighboring details needed for complete answers. This is especially visible when a question asks for multiple linked facts, such as names plus roles, dates plus outcomes, or policy conditions plus exceptions.
-
-GRAG retrieves richer context sets and benefits from reranking. This helps when documents contain repeated labels, dense lists, tabular-style content, or mixed sections where a flat chunking strategy can blur boundaries.
-
-The improvement in context recall shows that GRAG is better at surfacing the needed evidence. The simultaneous improvement in context precision shows that this recall gain does not come only from adding noise.
-
-## Answer Quality Analysis
-
-GRAG answers are generally more complete because the retrieved context more often includes all required facts. The largest practical improvements appear in questions that require:
-
-- Combining multiple facts from the same document.
-- Reading structured sections such as meeting minutes, policies, and reports.
-- Extracting exact numeric values, dates, names, and procedural details.
-- Understanding document-specific wording rather than broad semantic similarity alone.
-
-The Naive RAG baseline can answer many direct questions, especially when the answer appears in a single obvious chunk. It is weaker when evidence is split across nearby sections or when the most similar chunk is not the most complete chunk.
+- +0.0980 CR
+- +0.0626 F1
+- +7.90% F1 relative
 
 ## Interpretation
 
-The benchmark supports the core GRAG hypothesis: retrieval improvements can raise answer quality without relying on larger prompts or heavier generation. The results point to retrieval structure, context selection, and reranking as useful levers for solving the document zoo problem.
+Two conclusions stand out from the report matrix.
 
-The strongest evidence is the context recall gain. In RAG systems, missing evidence is a hard failure mode because the generator cannot faithfully answer from information it never receives. GRAG reduces that failure mode while also improving precision, correctness, and faithfulness.
+1. Raw GRAG without reranking is not a uniform win.
+   - It beats Naive RAG in three of the four configurations.
+   - It slightly trails Naive RAG in the Qwen3-Embedding + Gemma-4-E2B setting.
 
-## Reliability Note
+2. The full GRAG pipeline is consistently stronger once reranking is enabled.
+   - GRAG + reranker is best in every saved configuration.
+   - The gain is stable across both embedding backends and both generators.
 
-These results should be interpreted as directional rather than definitive. The benchmark uses a small language model for answer generation and model-based evaluation, which may make the reported scores less reliable than results produced with a stronger evaluator or with human review. The comparison is still useful for observing retrieval behavior under the same setup, but the absolute numbers should not be treated as final benchmark claims.
-
-## Conclusion
-
-The benchmark shows that GRAG provides a consistent improvement over the Naive RAG baseline across retrieval and answer-quality metrics. The most important result is the strong context recall improvement, which directly supports the goal of making RAG systems more reliable on heterogeneous real-world documents.
+This supports a more precise version of the GRAG claim: the main benchmark win comes from the combination of document-aware retrieval plus reranking, not from retrieval routing alone.
