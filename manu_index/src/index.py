@@ -92,21 +92,21 @@ class ManuIndex:
     def search(
         self,
         query: str,
-        reranker: ONNXReranker,
         top_k: int = 3,
         top_c: int = 5,
         lambda_mult: float = 0.8,
         alpha: float = 0.5,
+        reranker: ONNXReranker | None = None,
     ) -> List[str]:
         """Retrieve relevant passages for a query.
 
         Args:
             query: Natural-language search query.
-            reranker: Reranking model used to re-rank retrieved documents.
             top_k: Number of passages to return.
             top_c: Number of collections to retrieve from before reranking.
             lambda_mult: MMR diversity parameter (0 = max diversity, 1 = max relevance).
             alpha: Weight given to dense retrieval in hybrid mode (BM25 gets 1 - alpha).
+            reranker: Optional reranking model used to re-rank retrieved documents. When omitted, retrieved candidates are returned in retrieval order.
 
         Returns:
             List of matching passage strings.
@@ -138,6 +138,9 @@ class ManuIndex:
         candidate_texts = self._dedupe_page_content(candidates)
         if not candidate_texts:
             return []
+
+        if reranker is None:
+            return candidate_texts[:top_k]
 
         ranked_documents = reranker.rerank(query=query, documents=candidate_texts)
         return [document for document, _score in ranked_documents[:top_k]]
@@ -258,7 +261,8 @@ class ManuIndex:
         matrix = np.array([e["values"] for e in data], dtype=np.float32)
         scores = np.dot(matrix, query_embedding)
         collection_count = max(1, min(top_c, len(ids)))
-        top_indices = np.argsort(scores)[::-1][:collection_count]
+        top_indices = np.argpartition(scores, -collection_count)[-collection_count:]
+        top_indices = top_indices[np.argsort(scores[top_indices])[::-1]]
         return [ids[int(i)] for i in top_indices]
 
     def _lexical_store(self, doc_id: str, documents: List[Document]) -> None:

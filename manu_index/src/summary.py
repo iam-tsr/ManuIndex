@@ -3,12 +3,23 @@ from typing import Any
 
 SYSTEM_PROMPT = """You are a document summarization expert. Your task is to produce a short, dense, narrative summary that captures the document's core topics, key arguments, and domain — in 4 to 5 sentences. The summary will be used as a routing vector in a retrieval system, so it must be semantically rich and representative of the full document."""
 
-JUDGE_PROMPT = """You are evaluating whether a list of section headings provides sufficient context to write a meaningful summary of a document.
+JUDGE_PROMPT = """You are evaluating whether a list of section headings provides enough document-wide context to write a meaningful summary of the full document.
 
 Respond with only "true" or "false".
 
-- "true"  → the headings clearly convey the document's topics, domain, and structure
-- "false" → the headings are too sparse, generic, or ambiguous to summarize the document reliably
+Return "true" only when the headings, by themselves, clearly reveal all of the following:
+- the document's domain or subject area
+- multiple specific topics or subtopics
+- enough structure to infer the document's overall scope
+
+Return "false" when any of these apply:
+- there are fewer than 4 distinct substantive headings
+- the list is mostly a document title plus 1-2 section headings
+- the headings are generic labels such as Introduction, Overview, Background, Method, Results, Conclusion, References, or Appendix
+- the headings are sparse, ambiguous, repetitive, or lack domain-specific terms
+- the headings would force you to guess the document's core content
+
+When uncertain, return "false" so the full document is summarized instead.
 
 Headings:
 {titles}"""
