@@ -276,9 +276,7 @@ This is useful for document-zoo corpora where important evidence may be embedded
 
 ## Benchmark
 
-The benchmark compares GRAG/ManuIndex against a Naive RAG baseline on the same source documents, questions, embeddings, chunk size, top-k, generator, and RAGAS evaluation setup.
-
-Shared benchmark configuration from the saved reports:
+The benchmark compares GRAG/ManuIndex against a Naive RAG baseline on the same 25-document, 125-question evaluation corpus with the same retrieval budget:
 
 | Setting | Value |
 | --- | --- |
@@ -286,42 +284,60 @@ Shared benchmark configuration from the saved reports:
 | Questions | 125 |
 | Top-k | 3 |
 | Chunk size | 500 |
-| Embedding model | BGE-M3 ONNX Q4 |
-| Generator | Gemma-4-E2B GGUF Q4 |
-| Metrics | RAGAS faithfulness, answer relevancy, context precision, context recall, answer correctness |
 
-Aggregate saved results:
+The saved reports now cover four embedding/generator combinations:
 
-| Metric | GRAG / ManuIndex | Naive RAG | Absolute gain | Relative gain |
-| --- | ---: | ---: | ---: | ---: |
-| Faithfulness | 0.9799 | 0.9408 | +0.0391 | +4.15% |
-| Answer relevancy | 0.8332 | 0.7993 | +0.0339 | +4.24% |
-| Context precision | 0.8547 | 0.8240 | +0.0307 | +3.72% |
-| Context recall | 0.9205 | 0.8204 | +0.1001 | +12.20% |
-| Answer correctness | 0.6872 | 0.6374 | +0.0498 | +7.81% |
+| Embeddings | Generator |
+| --- | --- |
+| BGE-M3 | Gemma-4-E2B |
+| BGE-M3 | Qwen3.5-2B |
+| Qwen3-Embedding | Gemma-4-E2B |
+| Qwen3-Embedding | Qwen3.5-2B |
+
+For each combination, the benchmark compares three retrieval variants:
+
+- Naive RAG
+- GRAG
+- GRAG + reranker
+
+This repository-level summary focuses on two numbers:
+
+- CR = context recall
+- F1 = the benchmark's combined quality score reported in [`benchmark/README.md`](https://github.com/iam-tsr/ManuIndex/blob/main/benchmark/README.md)
+
+Results across the full report matrix:
+
+| Embeddings | Generator | Naive CR | Naive F1 | GRAG CR | GRAG F1 | GRAG + reranker CR | GRAG + reranker F1 |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| BGE-M3 | Gemma-4-E2B | 0.8204 | 0.7174 | 0.8466 | 0.7328 | 0.9205 | **0.7869** |
+| BGE-M3 | Qwen3.5-2B | 0.8157 | 0.8484 | 0.8874 | 0.8843 | 0.9296 | **0.9236** |
+| Qwen3-Embedding | Gemma-4-E2B | 0.8129 | 0.7274 | 0.8130 | 0.7181 | 0.9184 | **0.7872** |
+| Qwen3-Embedding | Qwen3.5-2B | 0.8497 | 0.8728 | 0.8745 | 0.8753 | 0.9223 | **0.9186** |
+
+Average results across all four configurations:
+
+| System | Average CR | Average F1 |
+| --- | ---: | ---: |
+| Naive RAG | 0.8247 | 0.7915 |
+| GRAG | 0.8554 | 0.8026 |
+| GRAG + reranker | **0.9227** | **0.8541** |
 
 Main interpretation:
 
-- GRAG improves every reported metric over the flat baseline.
-- The largest gain is context recall, which directly supports the project hypothesis that document-aware retrieval reduces missing-evidence failures.
-- Context precision also improves, suggesting the recall gain is not simply caused by adding more noisy text.
-- The answer correctness and answer relevancy gains indicate that retrieval improvements carry through to generation quality.
-
-See `benchmark/README.md` for the fuller benchmark analysis.
-
-Reliability note: these benchmark numbers are useful for comparing retrieval behavior under a shared setup, but they should be treated as directional rather than final research claims, since the generator and model-based evaluator are small/local-model oriented.
+- The strongest and most stable result is that GRAG + reranker wins in every saved configuration.
+- Average improvement over Naive RAG is +0.0980 CR and +0.0626 F1, or +7.90% relative F1.
+- Raw GRAG without reranking is not a uniform win; the benchmark advantage becomes consistent when document-aware retrieval is paired with reranking.
 
 ## Mathematical Notes
 
 [`MATHS.md`](https://github.com/iam-tsr/ManuIndex/blob/main/MATHS.md) documents the mathematical formulation of:
 
-- Semantic chunking notes from the earlier design.
+- Deterministic neighbour chunking
 - Dense retrieval with Maximal Marginal Relevance.
 - Sparse retrieval with BM25.
 - Hybrid retrieval.
 - Query routing through summary embeddings.
-
-The current implementation uses deterministic recursive chunking in `ManuIndex.add_document()`. The older semantic chunking method remains in the source as deprecated and raises `NotImplementedError`.
+- Semantic chunking (from the earlier design).
 
 ## Why This Repository Matters for the Research
 
