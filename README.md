@@ -316,6 +316,6 @@ ManuIndex is licensed under MIT. See the [LICENSE](https://github.com/iam-tsr/Ma
 
 ---
 
-<div style="text-align:center">
+<div align="center">
 made with passion by TSR ;)
 </div>
