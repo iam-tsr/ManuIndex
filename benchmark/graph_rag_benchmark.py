@@ -1,5 +1,5 @@
 """
-Naive RAG Benchmark Evaluation Pipeline
+Graph RAG Benchmark Evaluation Pipeline
 =======================================
 Metrics: RAGAS (faithfulness, answer relevancy, context precision,
          context recall, answer correctness)
@@ -8,7 +8,8 @@ Metrics: RAGAS (faithfulness, answer relevancy, context precision,
 from dataclasses import dataclass
 
 from ._common import embeddings, run_family_benchmark
-from .src import NaiveRAG
+from .src import GraphRAG
+
 
 @dataclass(frozen=True)
 class Config:
@@ -25,16 +26,20 @@ config = Config(
     llm_model="Qwen3.5-2B",
 )
 
-naive_rag = NaiveRAG(embeddings=embeddings, top_k=config.top_k, chunk_size=config.chunk_size)
+graph_rag = GraphRAG(
+    embeddings=embeddings,
+    top_k=config.top_k,
+    chunk_size=config.chunk_size,
+)
 
 
 def main():
     run_family_benchmark(
-        report_title="Naive RAG Benchmark Report",
-        run_label="naive RAG",
-        report_filename="naive_rag_report.json",
+        report_title="Graph RAG Benchmark Report",
+        run_label="graph RAG",
+        report_filename="graph_rag_report.json",
         config=config,
-        retriever=naive_rag,
+        retriever=graph_rag,
     )
 
 

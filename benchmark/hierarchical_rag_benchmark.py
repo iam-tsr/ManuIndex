@@ -1,6 +1,6 @@
 """
-Naive RAG Benchmark Evaluation Pipeline
-=======================================
+Hierarchical RAG Benchmark Evaluation Pipeline
+==============================================
 Metrics: RAGAS (faithfulness, answer relevancy, context precision,
          context recall, answer correctness)
 """
@@ -8,7 +8,8 @@ Metrics: RAGAS (faithfulness, answer relevancy, context precision,
 from dataclasses import dataclass
 
 from ._common import embeddings, run_family_benchmark
-from .src import NaiveRAG
+from .src import HierarchicalRAG
+
 
 @dataclass(frozen=True)
 class Config:
@@ -25,16 +26,21 @@ config = Config(
     llm_model="Qwen3.5-2B",
 )
 
-naive_rag = NaiveRAG(embeddings=embeddings, top_k=config.top_k, chunk_size=config.chunk_size)
+hierarchical_rag = HierarchicalRAG(
+    embeddings=embeddings,
+    top_k=config.top_k,
+    section_chunk_size=config.chunk_size,
+    chunk_size=config.chunk_size,
+)
 
 
 def main():
     run_family_benchmark(
-        report_title="Naive RAG Benchmark Report",
-        run_label="naive RAG",
-        report_filename="naive_rag_report.json",
+        report_title="Hierarchical RAG Benchmark Report",
+        run_label="hierarchical RAG",
+        report_filename="hierarchical_rag_report.json",
         config=config,
-        retriever=naive_rag,
+        retriever=hierarchical_rag,
     )
 
 
