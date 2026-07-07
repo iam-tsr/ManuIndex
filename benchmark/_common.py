@@ -209,7 +209,7 @@ def run_ragas(results: list[dict]) -> dict:
         ("Answer Relevancy", get_ragas_metric("answer_relevancy", "answer_relevance")),
         ("Context Precision", get_ragas_metric("context_precision")),
         ("Context Recall", get_ragas_metric("context_recall")),
-        ("F1 Score", get_ragas_metric("answer_correctness")),
+        ("Answer Correctness", get_ragas_metric("answer_correctness")),
     ]
     metrics = []
     labels_by_column = {}
@@ -225,7 +225,7 @@ def run_ragas(results: list[dict]) -> dict:
     if not metrics:
         raise RuntimeError("No requested RAGAS metrics are available in the installed ragas version.")
 
-    scores = ragas_evaluate(dataset, metrics=metrics)
+    scores = ragas_evaluate(dataset, metrics=metrics, batch_size=16)
     score_df = scores.to_pandas()
     mean_scores = {}
     for column, label in labels_by_column.items():
@@ -233,6 +233,14 @@ def run_ragas(results: list[dict]) -> dict:
             mean_scores[label] = float(score_df[column].mean())
         else:
             skipped_metrics.append(label)
+
+    context_precision = mean_scores.get("Context Precision")
+    context_recall = mean_scores.get("Context Recall")
+    if isinstance(context_precision, float) and isinstance(context_recall, float):
+        denominator = context_precision + context_recall
+        mean_scores["F1"] = (
+            0.0 if denominator == 0 else (2 * context_precision * context_recall) / denominator
+        )
 
     if skipped_metrics:
         mean_scores["skipped_metrics"] = sorted(set(skipped_metrics))
