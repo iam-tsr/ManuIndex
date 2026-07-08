@@ -32,7 +32,13 @@ class ONNXEmbedder(Embeddings):
             if not 'CUDAExecutionProvider' in ort.get_available_providers():
                 raise RuntimeError("""CUDAExecutionProvider is not available in ONNX Runtime.
                                     `pip install "optimum[onnxruntime-gpu]"` to enable GPU support.""")
-            providers = ["CUDAExecutionProvider", "CPUExecutionProvider"]
+            providers = [
+                ("CUDAExecutionProvider", {
+                    "device_id": 0,
+                    "arena_extend_strategy": "kSameAsRequested",
+                }),
+                "CPUExecutionProvider",
+            ]
         elif device == "cpu":
             import onnxruntime as ort
             providers = ["CPUExecutionProvider"]
@@ -40,6 +46,7 @@ class ONNXEmbedder(Embeddings):
             raise ValueError(f"Unsupported device: {device}. Choose 'cpu' or 'cuda'.")
 
         session_options = ort.SessionOptions()
+        session_options.enable_mem_pattern = False  # avoid caching a plan per unique shape
         session_options.log_severity_level = 4
 
         self.tokenizer = AutoTokenizer.from_pretrained(tokenizer)
