@@ -1,188 +1,98 @@
-<img src="public/banner.png" alt="ManuIndex" width="100%">
+<img src="public/banner.png" alt="ManuIndex banner" width="100%">
 
-# ManuIndex - core implementation for the GRAG (Granular Retrieval-Augmented Generation) research paper
+> Core implementation of **GRAG**: a document-aware retrieval pipeline built for heterogeneous RAG corpora.
 
-ManuIndex is a document-aware retrieval engine for the "document zoo" problem in RAG: real corpora contain many heterogeneous documents, but flat vector databases mix all chunks into one retrieval space. ManuIndex separates document routing from chunk retrieval so a query first selects the most relevant document collections, then searches only inside those collections with hybrid dense/sparse retrieval and reranking.
+![Python](https://img.shields.io/badge/Python-3.11%2B-1f6feb)
+![License](https://img.shields.io/badge/License-MIT-2ea043)
+![Focus](https://img.shields.io/badge/RAG-Document--Aware-0a7ea4)
 
-The goal of this repository is not to make prompts larger. It is to improve retrieval structure so the generator receives fewer, better, more local pieces of evidence.
+ManuIndex is designed for the "document zoo" problem: policies, reports, minutes, contracts, research notes, schedules, and other formats often behave poorly when everything is dumped into one flat vector index.
 
-## Research Motivation
+Instead of retrieving chunks from one mixed search space, ManuIndex routes the query to the most relevant documents first, then runs hybrid retrieval inside those selected documents only.
 
-Traditional RAG commonly stores chunks from every document in one vector index. This makes retrieval fragile when the corpus contains reports, policies, meeting minutes, legal agreements, schedules, clinical notes, press releases, and other formats at the same time.
+## Why It Works
 
-The main failure modes are:
+- **Document routing first**: each document gets a compact LLM summary used as a routing vector.
+- **Local retrieval second**: dense FAISS and sparse BM25 retrieval run inside selected documents.
+- **Better context locality**: neighbor chunk expansion preserves nearby evidence.
+- **Cleaner final ranking**: ONNX reranking filters noisy candidates before generation.
+- **Practical deployment**: embeddings and reranking can run locally with ONNX Runtime.
 
-- Cross-document interference: a semantically similar chunk from the wrong document can outrank the right evidence.
-- Lost local context: a single chunk may match the query but miss neighboring clauses, table rows, conditions, or definitions.
-- Wasted context budget: irrelevant chunks consume the top-k window and the LLM prompt.
-- Hallucination pressure: weak or wrong evidence forces the generator to infer beyond the retrieved context.
-
-GRAG addresses this by making retrieval granular at two levels:
-
-1. Document-level routing: each ingested document receives a compact LLM-generated summary. The summary is embedded and stored as the routing vector for that document.
-2. Chunk-level retrieval: selected document collections are searched internally with dense MMR, sparse BM25, neighbor expansion, and ONNX reranking.
-
-## System Overview
+## Retrieval Flow
 
 ```mermaid
 flowchart TD
-    A[Markdown or parsed PDF document] --> B[Document summary]
-    B --> C[Summary embedding metadata]
-    A --> D[Deterministic chunking]
-    D --> E[Per-document FAISS dense index]
-    D --> F[Per-document BM25 sparse index]
+    A[Document] --> B[Summary generation]
+    A --> C[Deterministic chunking]
+    B --> D[Summary embedding]
+    C --> E[Per-document FAISS index]
+    C --> F[Per-document BM25 index]
 
-    Q[User query] --> R[Embed query]
-    R --> C
-    C --> S[Select top document collections]
-    S --> E
-    S --> F
+    Q[Query] --> R[Query embedding]
+    R --> D
+    D --> G[Select top documents]
+    G --> E
+    G --> F
     E --> H[Hybrid retrieval]
     F --> H
-    H --> N[Neighbor chunk expansion]
-    N --> X[ONNX reranker]
-    X --> Y[Top-k contexts for generation]
+    H --> I[Neighbor expansion]
+    I --> J[ONNX reranking]
+    J --> K[Final contexts]
 ```
 
-At search time, ManuIndex loads only the selected per-document collections instead of searching a single mixed index over every chunk in the corpus.
+## Benchmark Snapshot
 
-## Core Components
+The benchmark evaluates **7 retrieval pipelines** on a heterogeneous corpus of **25 documents** and **125 questions** with a fixed `top_k=3`.
 
-### ManuIndex
+| Method Group | Avg F1 | Avg Context Recall | Avg End-to-End Time |
+| --- | ---: | ---: | ---: |
+| GRAG | **0.6631** | **0.7186** | **0.583s** |
+| Best non-GRAG flat / hierarchical baselines | 0.6237 | 0.6358 | slower |
+| Graph RAG | **0.9565** | **0.9473** | 3.681s |
 
-`ManuIndex` is the main retrieval class. It persists one dense FAISS index and one BM25 sparse index per document, plus a metadata file containing document summaries and summary embeddings.
+Interpretation:
 
-Current constructor:
-
-```python
-from manu_index import ManuIndex
-
-index = ManuIndex(
-    client=client,
-    model_name="your-openai-compatible-model",
-    embeddings=embeddings,
-    persist_directory="manu_index_db",
-)
-```
-
-Main methods:
-
-```python
-index.add_document(documents, chunk_size=500)
-index.search(query, reranker, top_k=3, top_c=5, lambda_mult=0.8, alpha=0.5)
-index.info()
-index.delete(doc_id)
-index.clear()
-```
-
-Retrieval stages in `search()`:
-
-1. Embed the user query.
-2. Compare the query embedding against stored summary embeddings.
-3. Select the top `top_c` document collections.
-4. Run hybrid retrieval inside each selected collection.
-5. Expand retrieved chunks with immediate neighbors.
-6. Deduplicate candidate text.
-7. Rerank candidates with an ONNX reranker.
-8. Return the final top-k passage strings.
-
-### ONNXEmbedder
-
-`ONNXEmbedder` is a LangChain-compatible embedding wrapper around ONNX Runtime. It supports:
-
-- CPU and CUDA execution providers.
-- Hugging Face tokenizers.
-- Batched inference.
-- Mean pooling for sequence outputs.
-- Optional L2 normalization.
-- `embed_documents()` and `embed_query()` methods for LangChain integrations.
-
-Example:
-
-```python
-from manu_index import ONNXEmbedder
-
-embeddings = ONNXEmbedder(
-    model="onnx_models/bge_m3/onnx/model_q4.onnx",
-    tokenizer="onnx_models/bge_m3",
-    max_length=1024,
-    device="cpu",
-)
-```
-
-### ONNXReranker
-
-`ONNXReranker` scores query-document pairs with ONNX Runtime and returns documents sorted by relevance. It supports:
-
-- BGE sequence-classification rerankers such as `bge-reranker-v2-m3`.
-- Qwen decoder-style rerankers.
-- BGE decoder-style rerankers.
-- Automatic reranker type inference from local config when possible.
-- CPU or CUDA execution.
-
-Example:
-
-```python
-from manu_index import ONNXReranker
-
-reranker = ONNXReranker(
-    model="onnx_models/bge_reranker_v2_m3/onnx/model_q4.onnx",
-    tokenizer="onnx_models/bge_reranker_v2_m3",
-    max_length=1024,
-    device="cuda",
-    reranker_type="auto",
-)
-```
-
-### DocumentSummary
-
-`DocumentSummary` creates a compact routing summary for each document. It first extracts Markdown headings and asks an LLM judge whether those headings are semantically sufficient. If the headings are rich enough, only the headings are summarized; otherwise the full document text is summarized.
-
-This reduces summary-generation token cost when a document has good structure while preserving fallback quality for sparse or unstructured documents.
-
-### Persistence Format
-
-By default, indexes are stored under `manu_index_db/`.
-
-```text
-manu_index_db/
-  _meta.json             Document IDs, summaries, and summary embeddings
-  <doc_id>dnse.faiss     Per-document FAISS dense index
-  <doc_id>dnse.pkl       Per-document FAISS docstore metadata
-  <doc_id>spr.pkl        Per-document BM25 retriever pickle
-```
-
-The `doc_id` is a six-character UUID prefix generated when a document is added.
+- **GRAG is the best efficiency-oriented system** in this repo's benchmark.
+- **Graph RAG is the quality leader overall**, but with materially higher latency and token cost.
+- GRAG improves retrieval quality over simpler flat baselines without turning into the most expensive pipeline.
 
 ## Installation
 
-This project uses `uv` and requires Python 3.11 or newer.
+ManuIndex requires **Python 3.11+** and uses `uv`.
 
 ```bash
 uv sync
 ```
 
-Main runtime dependencies include FAISS CPU, LangChain community/text splitters, OpenAI-compatible client support, ONNX Runtime via Optimum, Transformers, Rank-BM25, Pillow, and `pymupdf4llm-tsr`.
+Core dependencies include FAISS, LangChain community utilities, ONNX Runtime via Optimum, Transformers, Rank-BM25, and PDF-to-Markdown tooling.
 
 ## Model Setup
 
-The benchmark configuration uses:
-
-- Embedding model: BGE-M3 ONNX Q4
-- Reranker model: BGE reranker v2 M3 ONNX Q4
-- Generator/evaluator endpoint: OpenAI-compatible chat API
-
-Download helper:
+Download the default embedding model:
 
 ```bash
 python helpers/model_download.py
 ```
 
-The helper currently downloads the configured embedding model into `onnx_models/`. To download reranker models as well, call `download_onnx_models("reranker", "onnx_models")` from `helpers/model_download.py` or extend the script entry point.
+If you also want the reranker weights, call `download_onnx_models("reranker", "onnx_models")` from the helper module.
+
+## Environment
+
+Set these variables before running the examples:
+
+```bash
+OPENAI_API_KEY=...
+OPENAI_MODEL_NAME=...
+OPENAI_BASE_URL=...   # optional for OpenAI-compatible endpoints
+```
+
+If you use the PDF image-analysis helper, also set:
+
+```bash
+GROQ_API_KEY=...
+```
 
 ## Quick Start
-
-### Build an index
 
 ```python
 import os
@@ -193,7 +103,6 @@ client = OpenAI(
     api_key=os.environ["OPENAI_API_KEY"],
     base_url=os.environ.get("OPENAI_BASE_URL"),
 )
-model_name = os.environ["OPENAI_MODEL_NAME"]
 
 embeddings = ONNXEmbedder(
     model="onnx_models/bge_m3/onnx/model_q4.onnx",
@@ -206,24 +115,20 @@ reranker = ONNXReranker(
     model="onnx_models/bge_reranker_v2_m3/onnx/model_q4.onnx",
     tokenizer="onnx_models/bge_reranker_v2_m3",
     max_length=1024,
-    device="cuda",
-    reranker_type="bge_classifier",
+    device="cpu",
+    reranker_type="auto",
 )
 
 index = ManuIndex(
     client=client,
-    model_name=model_name,
+    model_name=os.environ["OPENAI_MODEL_NAME"],
     embeddings=embeddings,
     persist_directory="manu_index_db",
 )
 
-index.add_document("your_markdown_file")
-```
+index.add_document("sample.md")
 
-### Search
-
-```python
-contexts = index.search(
+results = index.search(
     query="What role is being hired for?",
     reranker=reranker,
     top_k=3,
@@ -232,39 +137,65 @@ contexts = index.search(
     lambda_mult=0.8,
 )
 
-for context in contexts:
-    print(context)
+for text in results:
+    print(text)
 ```
 
-Parameter meanings:
+## Public API
 
-- `top_k`: number of final passages returned after reranking.
-- `top_c`: number of document collections selected by summary routing.
-- `alpha`: hybrid retrieval weight; `1.0` favors dense retrieval and `0.0` favors sparse retrieval.
-- `lambda_mult`: MMR relevance-diversity tradeoff; higher values favor relevance.
+### `ManuIndex`
 
-### Inspect and manage indexed documents
+Main methods:
 
 ```python
-for entry in index.info():
-    print(entry["doc_id"], entry["summary"])
-
-index.delete("abc123")
+index.add_document(documents, chunk_size=500)
+index.search(query, top_k=3, top_c=5, lambda_mult=0.8, alpha=0.5, reranker=reranker)
+index.info()
+index.delete(doc_id)
 index.clear()
 ```
 
-## PDF Parsing Helper
+Search behavior:
 
-`helpers/parser.py` converts PDFs to Markdown using `pymupdf4llm-tsr` and optionally sends figures/images to a Groq-hosted vision model for analysis.
+1. Embed the query.
+2. Route it to the top document summaries.
+3. Retrieve candidates with dense + sparse search.
+4. Expand neighbor chunks.
+5. Rerank the final candidate pool.
 
-Conceptual flow:
+### `ONNXEmbedder`
+
+LangChain-compatible embedding wrapper with:
+
+- CPU and CUDA execution
+- batched inference
+- mean pooling
+- optional normalization
+- `embed_documents()` and `embed_query()`
+
+### `ONNXReranker`
+
+ONNX reranker supporting:
+
+- BGE classifier rerankers
+- BGE decoder rerankers
+- Qwen decoder rerankers
+- automatic reranker type inference
+- CPU and CUDA execution
+
+## PDF Ingestion
+
+PDFs can be converted to Markdown before indexing, including optional image analysis for charts, figures, or visually rich pages.
 
 ```python
 import pymupdf
 import pymupdf4llm
 from pymupdf4llm.helpers.image_analyzer import GroqImageAnalyzer
 
-analyzer = GroqImageAnalyzer(api_key="...", model_name="meta-llama/llama-4-scout-17b-16e-instruct")
+analyzer = GroqImageAnalyzer(
+    api_key="...",
+    model_name="meta-llama/llama-4-scout-17b-16e-instruct",
+)
 
 with pymupdf.open("report.pdf") as document:
     markdown = pymupdf4llm.to_markdown(document, analyze_image=analyzer)
@@ -272,50 +203,19 @@ with pymupdf.open("report.pdf") as document:
 index.add_document(markdown)
 ```
 
-This is useful for document-zoo corpora where important evidence may be embedded in figures, charts, scanned-like layouts, or tables.
+## Repository Highlights
 
-## Benchmark
+- `manu_index`: core retrieval, embedding, reranking, and summary-routing logic
+- `benchmark`: evaluation suite, saved reports, and comparison plots
+- `helpers`: model download and PDF parsing utilities
+- `tests`: usage examples for indexing, search, reranking, and summarization
 
-The benchmark compares GRAG/ManuIndex against a Naive RAG baseline on the same 25-document, 125-question evaluation corpus with the same retrieval budget.
+## Notes
 
-This repository-level summary focuses on two numbers:
-
-- CR = context recall
-- F1 = the benchmark's combined quality score reported in [`benchmark/README.md`](https://github.com/iam-tsr/ManuIndex/blob/main/benchmark/README.md)
-
-Results across the full report matrix:
-
-![alt text](public/table.png)
-
-Main interpretation:
-
-- The strongest and most stable result is that GRAG + reranker wins in every saved configuration.
-- Average improvement over Naive RAG is +0.0980 CR and +0.0626 F1, or +7.90% relative F1.
-- Raw GRAG without reranking is not a uniform win; the benchmark advantage becomes consistent when document-aware retrieval is paired with reranking.
-
-## Mathematical Notes
-
-[`MATHS.md`](https://github.com/iam-tsr/ManuIndex/blob/main/MATHS.md) documents the mathematical formulation of:
-
-- Deterministic neighbour chunking
-- Dense retrieval with Maximal Marginal Relevance.
-- Sparse retrieval with BM25.
-- Hybrid retrieval.
-- Query routing through summary embeddings.
-- Semantic chunking (from the earlier design).
-
-## Why This Repository Matters for the Research
-
-This repository is the implementation core for GRAG. It contains the retrieval mechanism, persistence design, local ONNX inference wrappers, benchmark dataset, baseline comparison, and saved evaluation reports needed to support the research argument:
-
-A RAG system can become more reliable on heterogeneous document collections by improving retrieval granularity and routing structure, rather than relying only on longer prompts or larger generation models.
+- Document summaries are generated with an LLM and stored as routing metadata.
+- Each indexed document gets its own FAISS and BM25 stores rather than joining all chunks into one global index.
+- `MATHS.md` contains the underlying retrieval formulations and scoring notes.
 
 ## License
 
-ManuIndex is licensed under MIT. See the [LICENSE](https://github.com/iam-tsr/ManuIndex/blob/main/LICENSE) file for details.
-
----
-
-<div align="center">
-made with passion by TSR ;)
-</div>
+MIT. See `LICENSE`.
