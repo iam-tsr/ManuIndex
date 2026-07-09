@@ -33,7 +33,7 @@ client = OpenAI(
 )
 LLM_MODEL = os.getenv("OPENAI_MODEL_NAME")
 
-embeddings = ONNXEmbedder(EMB_MODEL, EMD_TOKENIZER, MAX_LENGTH, device="cpu")
+embeddings = ONNXEmbedder(EMB_MODEL, EMD_TOKENIZER, MAX_LENGTH, batch_size=1, device="cuda")
 
 
 def require_llm_model() -> str:

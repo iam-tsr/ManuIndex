@@ -27,7 +27,7 @@ class HierarchicalRAG:
     def get_section_chunks(self, sections):
         chunked_sections = []
         for section in sections:
-            for chunk in split_documents(section.page_content, chunk_size=self.chunk_size, chunk_overlap=60):
+            for chunk in split_documents(section.page_content, chunk_size=self.chunk_size, chunk_overlap=0):
                 chunk.metadata["section_index"] = section.metadata.get("section_index")
                 chunk.metadata["heading"] = section.metadata.get("heading")
                 chunked_sections.append(chunk)

@@ -32,7 +32,7 @@ def split_documents(
     return documents
 
 
-def split_markdown_sections(text: str, fallback_chunk_size: int = 1200) -> list[Document]:
+def split_markdown_sections(text: str, fallback_chunk_size: int = 150) -> list[Document]:
     lines = text.splitlines()
     sections: list[Document] = []
     current_heading = "Document"
@@ -65,7 +65,7 @@ def split_markdown_sections(text: str, fallback_chunk_size: int = 1200) -> list[
     if sections:
         return sections
 
-    return split_documents(text, chunk_size=fallback_chunk_size, chunk_overlap=120)
+    return split_documents(text, chunk_size=fallback_chunk_size, chunk_overlap=0)
 
 
 def dedupe_texts(texts: Iterable[str]) -> list[str]:

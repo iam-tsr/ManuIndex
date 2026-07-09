@@ -9,13 +9,6 @@ from dataclasses import dataclass
 
 from ._common import embeddings, run_family_benchmark
 from .src import FlatHybridRAG
-# from manu_index import ONNXReranker
-
-RRNK_MODEL = "onnx_models/bge_reranker_v2_m3/onnx/model_q4.onnx"
-RRNK_TOKENIZER = "onnx_models/bge_reranker_v2_m3"
-MAX_LENGTH = 1024
-
-# reranker = ONNXReranker(RRNK_MODEL, RRNK_TOKENIZER, MAX_LENGTH, device="cuda")
 
 @dataclass(frozen=True)
 class Config:

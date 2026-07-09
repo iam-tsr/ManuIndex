@@ -17,7 +17,7 @@ class ParentChildRAG:
         self.child_chunk_size = child_chunk_size
 
     def get_parent_chunks(self, document: str):
-        return split_documents(document, chunk_size=self.parent_chunk_size, chunk_overlap=120)
+        return split_documents(document, chunk_size=self.parent_chunk_size, chunk_overlap=0)
 
     def get_child_chunks(self, parent_chunks):
         child_chunks = []
