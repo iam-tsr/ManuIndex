@@ -10,3 +10,4 @@ notebook_exp/
 .env
 manu_index_db/
 faiss_index/
+.mplconfig/
