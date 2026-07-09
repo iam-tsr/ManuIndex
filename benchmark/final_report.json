@@ -1,0 +1,546 @@
+{
+  "BGE-M3 (ONNX)": {
+    "Gemma-4-E2B": {
+      "flat_hybrid_rag": {
+        "config": {
+          "top_k": 3,
+          "chunk_size": 150
+        },
+        "ragas": {
+          "Context Recall": 0.6014761904761906,
+          "F1": 0.5436695448133506
+        },
+        "runtime": {
+          "average_retrieval_time_seconds": 0.41177021758415505,
+          "average_answer_time_seconds": 0.30968786119198194
+        },
+        "cost": {
+          "average_input_tokens": 172.008,
+          "average_output_tokens": 34.224,
+          "average_total_tokens": 206.232
+        }
+      },
+      "grag": {
+        "config": {
+          "top_k": 3,
+          "chunk_size": 150
+        },
+        "ragas": {
+          "Context Recall": 0.6826549450549451,
+          "F1": 0.6168802962780912
+        },
+        "runtime": {
+          "average_retrieval_time_seconds": 0.04953805168007966,
+          "average_answer_time_seconds": 0.3980246173600026
+        },
+        "cost": {
+          "average_input_tokens": 326.424,
+          "average_output_tokens": 45.464,
+          "average_total_tokens": 371.888
+        }
+      },
+      "graph_rag": {
+        "config": {
+          "top_k": 3,
+          "chunk_size": 150
+        },
+        "ragas": {
+          "Context Recall": 0.9270000000000002,
+          "F1": 0.9314782608232163
+        },
+        "runtime": {
+          "average_retrieval_time_seconds": 0.27019534262399975,
+          "average_answer_time_seconds": 0.7487753234400115
+        },
+        "cost": {
+          "average_input_tokens": 1009.504,
+          "average_output_tokens": 69.688,
+          "average_total_tokens": 1079.192
+        }
+      },
+      "hierarchical_rag": {
+        "config": {
+          "top_k": 3,
+          "chunk_size": 150
+        },
+        "ragas": {
+          "Context Recall": 0.5272190476190476,
+          "F1": 0.484391960754297
+        },
+        "runtime": {
+          "average_retrieval_time_seconds": 0.4106654211119967,
+          "average_answer_time_seconds": 0.3189491028319826
+        },
+        "cost": {
+          "average_input_tokens": 172.016,
+          "average_output_tokens": 34.064,
+          "average_total_tokens": 206.08
+        }
+      },
+      "naive_rag": {
+        "config": {
+          "top_k": 3,
+          "chunk_size": 150
+        },
+        "ragas": {
+          "Context Recall": 0.5714857142857144,
+          "F1": 0.5656845613572172
+        },
+        "runtime": {
+          "average_retrieval_time_seconds": 0.40730834046399106,
+          "average_answer_time_seconds": 0.32759109227191946
+        },
+        "cost": {
+          "average_input_tokens": 173.448,
+          "average_output_tokens": 36.392,
+          "average_total_tokens": 209.84
+        }
+      },
+      "parent_child_rag": {
+        "config": {
+          "top_k": 3,
+          "chunk_size": 150
+        },
+        "ragas": {
+          "Context Recall": 0.5714857142857144,
+          "F1": 0.5656845613572172
+        },
+        "runtime": {
+          "average_retrieval_time_seconds": 0.42191090430399925,
+          "average_answer_time_seconds": 0.32773462513600154
+        },
+        "cost": {
+          "average_input_tokens": 173.448,
+          "average_output_tokens": 36.392,
+          "average_total_tokens": 209.84
+        }
+      },
+      "query_rewrite_rag": {
+        "config": {
+          "top_k": 3,
+          "chunk_size": 150
+        },
+        "ragas": {
+          "Context Recall": 0.5714857142857144,
+          "F1": 0.5656845613572172
+        },
+        "runtime": {
+          "average_retrieval_time_seconds": 0.9027176103039988,
+          "average_answer_time_seconds": 0.3432825108959969
+        },
+        "cost": {
+          "average_input_tokens": 173.448,
+          "average_output_tokens": 36.392,
+          "average_total_tokens": 209.84
+        }
+      }
+    },
+    "Qwen3.5-2B": {
+      "flat_hybrid_rag": {
+        "config": {
+          "top_k": 3,
+          "chunk_size": 150
+        },
+        "ragas": {
+          "Context Recall": 0.6706413210445469,
+          "F1": 0.7194840317856747
+        },
+        "runtime": {
+          "average_retrieval_time_seconds": 0.34976793443206405,
+          "average_answer_time_seconds": 0.3024435421359667
+        },
+        "cost": {
+          "average_input_tokens": 176.512,
+          "average_output_tokens": 42.072,
+          "average_total_tokens": 218.584
+        }
+      },
+      "grag": {
+        "config": {
+          "top_k": 3,
+          "chunk_size": 150
+        },
+        "ragas": {
+          "Context Recall": 0.7758420441347271,
+          "F1": 0.7539890205494957
+        },
+        "runtime": {
+          "average_retrieval_time_seconds": 0.049672378919975016,
+          "average_answer_time_seconds": 0.37173053270397943
+        },
+        "cost": {
+          "average_input_tokens": 329.672,
+          "average_output_tokens": 55.6,
+          "average_total_tokens": 385.272
+        }
+      },
+      "graph_rag": {
+        "config": {
+          "top_k": 3,
+          "chunk_size": 150
+        },
+        "ragas": {
+          "Context Recall": 0.9735772357723579,
+          "F1": 0.9787608707805373
+        },
+        "runtime": {
+          "average_retrieval_time_seconds": 0.2861084666640127,
+          "average_answer_time_seconds": 0.6332636013519768
+        },
+        "cost": {
+          "average_input_tokens": 1013.192,
+          "average_output_tokens": 70.184,
+          "average_total_tokens": 1083.376
+        }
+      },
+      "hierarchical_rag": {
+        "config": {
+          "top_k": 3,
+          "chunk_size": 150
+        },
+        "ragas": {
+          "Context Recall": 0.6676267281105991,
+          "F1": 0.6535215238164336
+        },
+        "runtime": {
+          "average_retrieval_time_seconds": 0.4292588498880359,
+          "average_answer_time_seconds": 0.2797393775519886
+        },
+        "cost": {
+          "average_input_tokens": 176.448,
+          "average_output_tokens": 38.68,
+          "average_total_tokens": 215.128
+        }
+      },
+      "naive_rag": {
+        "config": {
+          "top_k": 3,
+          "chunk_size": 150
+        },
+        "ragas": {
+          "Context Recall": 0.6719512195121952,
+          "F1": 0.6876023681728942
+        },
+        "runtime": {
+          "average_retrieval_time_seconds": 0.3341872707598959,
+          "average_answer_time_seconds": 0.28478240312013076
+        },
+        "cost": {
+          "average_input_tokens": 177.448,
+          "average_output_tokens": 43.096,
+          "average_total_tokens": 220.544
+        }
+      },
+      "parent_child_rag": {
+        "config": {
+          "top_k": 3,
+          "chunk_size": 150
+        },
+        "ragas": {
+          "Context Recall": 0.6719512195121952,
+          "F1": 0.6876023681728942
+        },
+        "runtime": {
+          "average_retrieval_time_seconds": 0.35936223346399127,
+          "average_answer_time_seconds": 0.3095976533279918
+        },
+        "cost": {
+          "average_input_tokens": 177.448,
+          "average_output_tokens": 43.096,
+          "average_total_tokens": 220.544
+        }
+      },
+      "query_rewrite_rag": {
+        "config": {
+          "top_k": 3,
+          "chunk_size": 150
+        },
+        "ragas": {
+          "Context Recall": 0.6719512195121952,
+          "F1": 0.6876023681728942
+        },
+        "runtime": {
+          "average_retrieval_time_seconds": 0.7960586704319831,
+          "average_answer_time_seconds": 0.2968321873279965
+        },
+        "cost": {
+          "average_input_tokens": 177.448,
+          "average_output_tokens": 43.096,
+          "average_total_tokens": 220.544
+        }
+      }
+    }
+  },
+  "Qwen3-Embedding 0.6B (ONNX)": {
+    "Gemma-4-E2B": {
+      "flat_hybrid_rag": {
+        "config": {
+          "top_k": 3,
+          "chunk_size": 150
+        },
+        "ragas": {
+          "Context Recall": 0.6012507936507935,
+          "F1": 0.5543866408476942
+        },
+        "runtime": {
+          "average_retrieval_time_seconds": 1.2534554723040128,
+          "average_answer_time_seconds": 0.30178706524000154
+        },
+        "cost": {
+          "average_input_tokens": 170.824,
+          "average_output_tokens": 32.28,
+          "average_total_tokens": 203.104
+        }
+      },
+      "grag": {
+        "config": {
+          "top_k": 3,
+          "chunk_size": 150
+        },
+        "ragas": {
+          "Context Recall": 0.6807238095238095,
+          "F1": 0.5604922832713616
+        },
+        "runtime": {
+          "average_retrieval_time_seconds": 0.07521056815207704,
+          "average_answer_time_seconds": 0.551581106623984
+        },
+        "cost": {
+          "average_input_tokens": 314.256,
+          "average_output_tokens": 35.12,
+          "average_total_tokens": 349.376
+        }
+      },
+      "graph_rag": {
+        "config": {
+          "top_k": 3,
+          "chunk_size": 150
+        },
+        "ragas": {
+          "Context Recall": 0.9360380952380951,
+          "F1": 0.9439515747801822
+        },
+        "runtime": {
+          "average_retrieval_time_seconds": 0.4937109042959637,
+          "average_answer_time_seconds": 0.7573330333361228
+        },
+        "cost": {
+          "average_input_tokens": 1170.56,
+          "average_output_tokens": 67.944,
+          "average_total_tokens": 1238.504
+        }
+      },
+      "hierarchical_rag": {
+        "config": {
+          "top_k": 3,
+          "chunk_size": 150
+        },
+        "ragas": {
+          "Context Recall": 0.646,
+          "F1": 0.5400792792478476
+        },
+        "runtime": {
+          "average_retrieval_time_seconds": 0.9138549574400022,
+          "average_answer_time_seconds": 0.31285683699999206
+        },
+        "cost": {
+          "average_input_tokens": 169.08,
+          "average_output_tokens": 33.784,
+          "average_total_tokens": 202.864
+        }
+      },
+      "naive_rag": {
+        "config": {
+          "top_k": 3,
+          "chunk_size": 150
+        },
+        "ragas": {
+          "Context Recall": 0.639752380952381,
+          "F1": 0.526974836679042
+        },
+        "runtime": {
+          "average_retrieval_time_seconds": 0.7689906385120249,
+          "average_answer_time_seconds": 0.30397038196797255
+        },
+        "cost": {
+          "average_input_tokens": 168.168,
+          "average_output_tokens": 32.448,
+          "average_total_tokens": 200.616
+        }
+      },
+      "parent_child_rag": {
+        "config": {
+          "top_k": 3,
+          "chunk_size": 150
+        },
+        "ragas": {
+          "Context Recall": 0.639752380952381,
+          "F1": 0.526974836679042
+        },
+        "runtime": {
+          "average_retrieval_time_seconds": 0.7617602054639988,
+          "average_answer_time_seconds": 0.29953285256000256
+        },
+        "cost": {
+          "average_input_tokens": 168.168,
+          "average_output_tokens": 32.448,
+          "average_total_tokens": 200.616
+        }
+      },
+      "query_rewrite_rag": {
+        "config": {
+          "top_k": 3,
+          "chunk_size": 150
+        },
+        "ragas": {
+          "Context Recall": 0.639752380952381,
+          "F1": 0.526974836679042
+        },
+        "runtime": {
+          "average_retrieval_time_seconds": 1.2300869509759687,
+          "average_answer_time_seconds": 0.30630088871199407
+        },
+        "cost": {
+          "average_input_tokens": 168.168,
+          "average_output_tokens": 32.448,
+          "average_total_tokens": 200.616
+        }
+      }
+    },
+    "Qwen3.5-2B": {
+      "flat_hybrid_rag": {
+        "config": {
+          "top_k": 3,
+          "chunk_size": 150
+        },
+        "ragas": {
+          "Context Recall": 0.6395929339477726,
+          "F1": 0.6774188081186697
+        },
+        "runtime": {
+          "average_retrieval_time_seconds": 1.4180975894721923,
+          "average_answer_time_seconds": 0.4901325023919926
+        },
+        "cost": {
+          "average_input_tokens": 175.104,
+          "average_output_tokens": 57.488,
+          "average_total_tokens": 232.592
+        }
+      },
+      "grag": {
+        "config": {
+          "top_k": 3,
+          "chunk_size": 150
+        },
+        "ragas": {
+          "Context Recall": 0.7349980642663569,
+          "F1": 0.7209003861944193
+        },
+        "runtime": {
+          "average_retrieval_time_seconds": 0.4550346459199354,
+          "average_answer_time_seconds": 0.3822409744559263
+        },
+        "cost": {
+          "average_input_tokens": 322.208,
+          "average_output_tokens": 54.624,
+          "average_total_tokens": 376.832
+        }
+      },
+      "graph_rag": {
+        "config": {
+          "top_k": 3,
+          "chunk_size": 150
+        },
+        "ragas": {
+          "Context Recall": 0.9524590163934427,
+          "F1": 0.9718274710345807
+        },
+        "runtime": {
+          "average_retrieval_time_seconds": 10.891728310032034,
+          "average_answer_time_seconds": 0.6442496294319644
+        },
+        "cost": {
+          "average_input_tokens": 1173.04,
+          "average_output_tokens": 72.576,
+          "average_total_tokens": 1245.616
+        }
+      },
+      "hierarchical_rag": {
+        "config": {
+          "top_k": 3,
+          "chunk_size": 150
+        },
+        "ragas": {
+          "Context Recall": 0.6243890518084066,
+          "F1": 0.6982772542319126
+        },
+        "runtime": {
+          "average_retrieval_time_seconds": 13.171609162328009,
+          "average_answer_time_seconds": 0.30231460201601296
+        },
+        "cost": {
+          "average_input_tokens": 175.976,
+          "average_output_tokens": 41.744,
+          "average_total_tokens": 217.72
+        }
+      },
+      "naive_rag": {
+          "config": {
+          "top_k": 3,
+          "chunk_size": 150
+        },
+        "ragas": {
+          "Context Recall": 0.6531165311653118,
+          "F1": 0.7092751600149173
+        },
+        "runtime": {
+          "average_retrieval_time_seconds": 0.669150975671997,
+          "average_answer_time_seconds": 0.2698855813760165
+        },
+        "cost": {
+          "average_input_tokens": 172.152,
+          "average_output_tokens": 38.784,
+          "average_total_tokens": 210.936
+        }
+      },
+      "parent_child_rag": {
+        "config": {
+          "top_k": 3,
+          "chunk_size": 150
+        },
+        "ragas": {
+          "Context Recall": 0.6599462365591398,
+          "F1": 0.6849856180749105
+        },
+        "runtime": {
+          "average_retrieval_time_seconds": 15.924016603200071,
+          "average_answer_time_seconds": 0.2950051675760333
+        },
+        "cost": {
+          "average_input_tokens": 179.936,
+          "average_output_tokens": 40.64,
+          "average_total_tokens": 220.576
+        }
+      },
+      "query_rewrite_rag": {
+        "config": {
+          "top_k": 3,
+          "chunk_size": 150
+        },
+        "ragas": {
+          "Context Recall": 0.6531165311653118,
+          "F1": 0.7092751600149173
+        },
+        "runtime": {
+          "average_retrieval_time_seconds": 7.172686232488005,
+          "average_answer_time_seconds": 0.26823246684798985
+        },
+        "cost": {
+          "average_input_tokens": 172.152,
+          "average_output_tokens": 38.784,
+          "average_total_tokens": 210.936
+        }
+      }
+    }
+  }
+}

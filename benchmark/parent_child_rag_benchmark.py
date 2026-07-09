@@ -22,7 +22,7 @@ class Config:
 config = Config(
     top_k=3,
     chunk_size=150,
-    emb_model="Qwen3-Embedding 0.6B (ONNX)",
+    emb_model="BGE-M3 (ONNX)",
     llm_model="Qwen3.5-2B",
 )
 
