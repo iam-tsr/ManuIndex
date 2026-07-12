@@ -54,7 +54,7 @@ class ManuIndex:
     def add_document(
         self,
         documents: str | bytes,
-        chunk_size: int = 500
+        chunk_size: int = 150
     ) -> FAISS:
         """Ingest a document into the index.
 
@@ -94,8 +94,8 @@ class ManuIndex:
         query: str,
         top_k: int = 3,
         top_c: int = 5,
-        lambda_mult: float = 0.8,
-        alpha: float = 0.5,
+        lambda_mult: float = 0.9,
+        alpha: float = 0.7,
         reranker: ONNXReranker | None = None,
     ) -> List[str]:
         """Retrieve relevant passages for a query.
@@ -140,7 +140,20 @@ class ManuIndex:
             return []
 
         if reranker is None:
-            return candidate_texts[:top_k]
+            documents = [Document(page_content=text) for text in
+            candidate_texts]
+
+            dense_store = FAISS.from_documents(documents, self.embeddings)
+            dense = dense_store.as_retriever(
+                search_type="mmr",
+                search_kwargs={"k": top_k, "lambda_mult": lambda_mult},
+            )
+
+            sparse = BM25Retriever.from_documents(documents)
+            sparse.k = top_k
+
+            retriever = self._hybrid_retrieval(dense=dense, sparse=sparse, alpha=alpha)
+            return [doc.page_content for doc in retriever.invoke(query)[:top_k]]
 
         ranked_documents = reranker.rerank(query=query, documents=candidate_texts)
         return [document for document, _score in ranked_documents[:top_k]]
@@ -255,7 +268,7 @@ class ManuIndex:
         return os.path.join(self.persist_directory, f"{doc_id}{SPARSE_INDEX_SUFFIX}")
 
     def _find_collections(self, query_embedding, top_c: int) -> list[str]:
-        """Return the top ``top_c`` doc_ids whose summaries are closest to the query."""
+        """Return the top `top_c` doc_ids whose summaries are closest to the query."""
         data = self._load_meta()
         ids = [e["doc_id"] for e in data]
         matrix = np.array([e["values"] for e in data], dtype=np.float32)
