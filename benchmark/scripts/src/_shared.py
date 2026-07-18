@@ -9,13 +9,12 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 def split_documents(
     text: str,
     chunk_size: int,
-    chunk_overlap: int = 0,
-    separators: list[str] | None = None,
+    chunk_overlap: int = 30,
 ) -> list[Document]:
     splitter = RecursiveCharacterTextSplitter(
         chunk_size=chunk_size,
         chunk_overlap=chunk_overlap,
-        separators=separators or ["\n\n", "\n", " "],
+        separators=["\n\n", "\n", " "],
     )
     chunks = splitter.split_text(text)
 
@@ -32,42 +31,6 @@ def split_documents(
     return documents
 
 
-def split_markdown_sections(text: str, fallback_chunk_size: int = 150) -> list[Document]:
-    lines = text.splitlines()
-    sections: list[Document] = []
-    current_heading = "Document"
-    current_lines: list[str] = []
-    section_index = 0
-
-    def flush_section() -> None:
-        nonlocal section_index, current_lines
-        body = "\n".join(current_lines).strip()
-        if not body:
-            return
-        content = f"{current_heading}\n{body}" if current_heading else body
-        sections.append(
-            Document(
-                page_content=content,
-                metadata={"section_index": section_index, "heading": current_heading},
-            )
-        )
-        section_index += 1
-        current_lines = []
-
-    for line in lines:
-        if line.lstrip().startswith("#"):
-            flush_section()
-            current_heading = line.strip()
-            continue
-        current_lines.append(line)
-
-    flush_section()
-    if sections:
-        return sections
-
-    return split_documents(text, chunk_size=fallback_chunk_size, chunk_overlap=0)
-
-
 def dedupe_texts(texts: Iterable[str]) -> list[str]:
     seen: set[str] = set()
     unique: list[str] = []
@@ -79,9 +42,9 @@ def dedupe_texts(texts: Iterable[str]) -> list[str]:
     return unique
 
 
-def join_top_k(texts: Iterable[str], top_k: int) -> str:
-    items = dedupe_texts(texts)
-    return "\n\n".join(items[:top_k])
+def select_top_k(texts: Iterable[str], top_k: int) -> list[str]:
+    """Dedupe and keep the first ``top_k`` passages as separate contexts."""
+    return dedupe_texts(texts)[:top_k]
 
 
 def l2_normalize(vector: list[float]) -> list[float]:

@@ -11,3 +11,6 @@ notebook_exp/
 manu_index_db/
 faiss_index/
 .mplconfig/
+reports/
+dataset/
+extra/

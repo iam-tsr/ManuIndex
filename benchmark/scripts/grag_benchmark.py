@@ -7,38 +7,22 @@ Metrics: RAGAS (faithfulness, answer relevancy, context precision,
 
 import tempfile
 import time
-from dataclasses import dataclass
 
 from manu_index import ManuIndex
 
 from ._common import (
     BENCHMARK_DIR,
-    MAX_LENGTH,
+    case_document_text,
     client,
+    config,
     embeddings,
     generate_answer,
     load_evaluation_cases,
-    print_report,
+    display_report,
     require_llm_model,
-    resolve_case_file_path,
     run_ragas,
     save_report,
     summarize_results,
-)
-
-@dataclass(frozen=True)
-class Config:
-    top_k: int
-    chunk_size: int
-    emb_model: str
-    llm_model: str
-
-
-config = Config(
-    top_k=3,
-    chunk_size=150,
-    emb_model="BGE-M3 (ONNX)",
-    llm_model="Qwen3.5-2B",
 )
 
 def ingest_documents(cases: list[dict], persist_dir: str) -> ManuIndex:
@@ -50,13 +34,11 @@ def ingest_documents(cases: list[dict], persist_dir: str) -> ManuIndex:
     )
     files_added: set[str] = set()
     for case in cases:
-        fname = case["file"]
-        path = resolve_case_file_path(fname)
-        path_key = str(path.resolve())
-        if path_key not in files_added:
-            print(f"  Ingesting {path} …")
-            db.add_document(str(path), chunk_size=config.chunk_size)
-            files_added.add(path_key)
+        doc_key = str(case["file"])
+        if doc_key not in files_added:
+            print(f"  Ingesting {doc_key} …")
+            db.add_document(case_document_text(case), chunk_size=config.chunk_size)
+            files_added.add(doc_key)
     return db
 
 def collect_results(db: ManuIndex, cases: list[dict]) -> list[dict]:
@@ -65,7 +47,7 @@ def collect_results(db: ManuIndex, cases: list[dict]) -> list[dict]:
     for case in cases:
         for q in case["questions"]:
             retrieval_start = time.perf_counter()
-            contexts = db.search(query=q["question"], top_k=config.top_k)
+            contexts = db.search(query=q["question"], top_k=config.top_k, lambda_mult=0.8, alpha=0.5)
             retrieval_time = time.perf_counter() - retrieval_start
 
             answer_start = time.perf_counter()
@@ -105,7 +87,7 @@ def main():
 
         elapsed = time.time() - t0
 
-    print_report("ManuIndex Benchmark Report", ragas_scores, summary, elapsed)
+    display_report("ManuIndex Benchmark Report", ragas_scores, summary, elapsed)
     save_report(BENCHMARK_DIR / "reports" / "grag_report.json", config, results, ragas_scores, summary)
 
 
