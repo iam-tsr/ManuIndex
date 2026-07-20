@@ -1,21 +1,19 @@
 import os
 import dotenv
-from pymupdf4llm.helpers.image_analyzer import GroqImageAnalyzer
+from pymupdf4llm.helpers.image_analyzer import OpenAIImageAnalyzer
 import pymupdf
 import pymupdf4llm
 
 dotenv.load_dotenv()
 
-analyzer = GroqImageAnalyzer(
-    api_key=os.getenv("GROQ_API_KEY"),
-    model_name = "meta-llama/llama-4-scout-17b-16e-instruct",
-    temperature = 0.7,
-    max_output_tokens = 2048
+analyzer = OpenAIImageAnalyzer(
+    api_key=os.getenv("OPENAI_API_KEY"),
+    model_name=os.getenv("OPENAI_MODEL_NAME")
 )
 
 def test_image_analyzer(document: str | bytes):
     path_export = os.path.splitext(document)[0] + "_parsed.md"
-    
+
     with pymupdf.open(document) as document:
         parsed_doc = pymupdf4llm.to_markdown(
                 document,

@@ -1,0 +1,622 @@
+{
+  "BGE-M3 (ONNX)": {
+    "Gemma-4-E2B": {
+      "benchmark": [
+        {
+          "report_name": "grag_report",
+          "config": {
+            "top_k": 5,
+            "chunk_size": 100
+          },
+          "ragas": {
+            "Faithfulness": 0.9416666666666665,
+            "Answer Relevancy": 0.876538724233978,
+            "Context Precision": 0.6002777777293907,
+            "Context Recall": 0.8130511463844797,
+            "Answer Correctness": 0.698333933196815,
+            "F1": 0.6906481952005772
+          },
+          "runtime": {
+            "average_retrieval_time_seconds": 0.26824139519998424,
+            "average_answer_time_seconds": 0.2855178179200084
+          },
+          "cost": {
+            "average_input_tokens": 346.36,
+            "average_output_tokens": 30.22,
+            "average_additional_tokens": 0.0,
+            "average_total_tokens": 376.58
+          }
+        },
+        {
+          "report_name": "rag_report",
+          "config": {
+            "top_k": 5,
+            "chunk_size": 100
+          },
+          "ragas": {
+            "Faithfulness": 0.9371666666666667,
+            "Answer Relevancy": 0.832424188633134,
+            "Context Precision": 0.3720833333046152,
+            "Context Recall": 0.6784682539682539,
+            "Answer Correctness": 0.6267386069615876,
+            "F1": 0.48059844473358526
+          },
+          "runtime": {
+            "average_retrieval_time_seconds": 0.13698746849999224,
+            "average_answer_time_seconds": 0.21625969081009316
+          },
+          "cost": {
+            "average_input_tokens": 187.13,
+            "average_output_tokens": 23.17,
+            "average_additional_tokens": 0.0,
+            "average_total_tokens": 210.3
+          }
+        },
+        {
+          "report_name": "hybrid_rag_report",
+          "config": {
+            "top_k": 5,
+            "chunk_size": 100
+          },
+          "ragas": {
+            "Faithfulness": 0.91,
+            "Answer Relevancy": 0.8503275285000701,
+            "Context Precision": 0.3954999999685249,
+            "Context Recall": 0.6778571428571429,
+            "Answer Correctness": 0.6150911142821276,
+            "F1": 0.4995401610183487
+          },
+          "runtime": {
+            "average_retrieval_time_seconds": 0.13429065885003183,
+            "average_answer_time_seconds": 0.21773984252006812
+          },
+          "cost": {
+            "average_input_tokens": 186.96,
+            "average_output_tokens": 24.18,
+            "average_additional_tokens": 0.0,
+            "average_total_tokens": 211.14
+          }
+        },
+        {
+          "report_name": "hierarchical_rag_report",
+          "config": {
+            "top_k": 5,
+            "chunk_size": 100
+          },
+          "ragas": {
+            "Faithfulness": 0.9046666666666667,
+            "Answer Relevancy": 0.8305675384352892,
+            "Context Precision": 0.3404444444175574,
+            "Context Recall": 0.689563492063492,
+            "Answer Correctness": 0.6109583551360837,
+            "F1": 0.4558373807258629
+          },
+          "runtime": {
+            "average_retrieval_time_seconds": 0.24620463361000475,
+            "average_answer_time_seconds": 0.2105978352999682
+          },
+          "cost": {
+            "average_input_tokens": 182.11,
+            "average_output_tokens": 22.81,
+            "average_additional_tokens": 0.0,
+            "average_total_tokens": 204.92
+          }
+        },
+        {
+          "report_name": "parent_child_rag_report",
+          "config": {
+            "top_k": 5,
+            "chunk_size": 100
+          },
+          "ragas": {
+            "Faithfulness": 0.9271666666666667,
+            "Answer Relevancy": 0.8401062962633077,
+            "Context Precision": 0.48324999996306806,
+            "Context Recall": 0.8296666666666667,
+            "Answer Correctness": 0.6991296143914181,
+            "F1": 0.6107568390692028
+          },
+          "runtime": {
+            "average_retrieval_time_seconds": 0.14716085262993148,
+            "average_answer_time_seconds": 0.2518170897900927
+          },
+          "cost": {
+            "average_input_tokens": 233.63,
+            "average_output_tokens": 27.39,
+            "average_additional_tokens": 0.0,
+            "average_total_tokens": 261.02
+          }
+        },
+        {
+          "report_name": "query_rewrite_rag_report",
+          "config": {
+            "top_k": 5,
+            "chunk_size": 100
+          },
+          "ragas": {
+            "Faithfulness": 0.9371666666666667,
+            "Answer Relevancy": 0.832424188633134,
+            "Context Precision": 0.3720833333046152,
+            "Context Recall": 0.6784682539682539,
+            "Answer Correctness": 0.6267386069615876,
+            "F1": 0.48059844473358526
+          },
+          "runtime": {
+            "average_retrieval_time_seconds": 0.5601598694900622,
+            "average_answer_time_seconds": 0.2178702411300128
+          },
+          "cost": {
+            "average_input_tokens": 255.84,
+            "average_output_tokens": 75.97,
+            "average_additional_tokens": 121.42,
+            "average_total_tokens": 331.81
+          }
+        }
+      ]
+    },
+    "Qwen3.5-2B": {
+      "benchmark": [
+        {
+          "report_name": "grag_report",
+          "config": {
+            "top_k": 5,
+            "chunk_size": 100
+          },
+          "ragas": {
+            "Faithfulness": 0.8918142463597009,
+            "Answer Relevancy": 0.7603640950450921,
+            "Context Precision": 0.7769166666194355,
+            "Context Recall": 0.8466209716209716,
+            "Answer Correctness": 0.9162551504765207,
+            "F1": 0.8102724909719344
+          },
+          "runtime": {
+            "average_retrieval_time_seconds": 0.26652027671985706,
+            "average_answer_time_seconds": 0.2771252701701269
+          },
+          "cost": {
+            "average_input_tokens": 355.35,
+            "average_output_tokens": 35.45,
+            "average_additional_tokens": 0.0,
+            "average_total_tokens": 390.8
+          }
+        },
+        {
+          "report_name": "rag_report",
+          "config": {
+            "top_k": 5,
+            "chunk_size": 100
+          },
+          "ragas": {
+            "Faithfulness": 0.8315,
+            "Answer Relevancy": 0.7494544360738695,
+            "Context Precision": 0.5952499999629951,
+            "Context Recall": 0.783452380952381,
+            "Answer Correctness": 0.857695879542453,
+            "F1": 0.6765057291382707
+          },
+          "runtime": {
+            "average_retrieval_time_seconds": 0.13738063212996166,
+            "average_answer_time_seconds": 0.315424669779959
+          },
+          "cost": {
+            "average_input_tokens": 191.17,
+            "average_output_tokens": 46.02,
+            "average_additional_tokens": 0.0,
+            "average_total_tokens": 237.19
+          }
+        },
+        {
+          "report_name": "hybrid_rag_report",
+          "config": {
+            "top_k": 5,
+            "chunk_size": 100
+          },
+          "ragas": {
+            "Faithfulness": 0.7941666666666667,
+            "Answer Relevancy": 0.7393517930538438,
+            "Context Precision": 0.6165555555178426,
+            "Context Recall": 0.7569285714285715,
+            "Answer Correctness": 0.8732330540351296,
+            "F1": 0.6795688522182354
+          },
+          "runtime": {
+            "average_retrieval_time_seconds": 0.13909500046999937,
+            "average_answer_time_seconds": 0.21819203291000805
+          },
+          "cost": {
+            "average_input_tokens": 191.11,
+            "average_output_tokens": 26.57,
+            "average_additional_tokens": 0.0,
+            "average_total_tokens": 217.68
+          }
+        },
+        {
+          "report_name": "hierarchical_rag_report",
+          "config": {
+            "top_k": 5,
+            "chunk_size": 100
+          },
+          "ragas": {
+            "Faithfulness": 0.8283333333333333,
+            "Answer Relevancy": 0.7526600425332844,
+            "Context Precision": 0.551708333299501,
+            "Context Recall": 0.7875,
+            "Answer Correctness": 0.8872234961172183,
+            "F1": 0.6488464888848505
+          },
+          "runtime": {
+            "average_retrieval_time_seconds": 0.24675962348987013,
+            "average_answer_time_seconds": 0.2126777166400825
+          },
+          "cost": {
+            "average_input_tokens": 186.56,
+            "average_output_tokens": 27.69,
+            "average_additional_tokens": 0.0,
+            "average_total_tokens": 214.25
+          }
+        },
+        {
+          "report_name": "parent_child_rag_report",
+          "config": {
+            "top_k": 5,
+            "chunk_size": 100
+          },
+          "ragas": {
+            "Faithfulness": 0.7663333333333333,
+            "Answer Relevancy": 0.7739760873916944,
+            "Context Precision": 0.5923194444074362,
+            "Context Recall": 0.7714404761904763,
+            "Answer Correctness": 0.8977914957670742,
+            "F1": 0.6701167666669884
+          },
+          "runtime": {
+            "average_retrieval_time_seconds": 0.13304673733999495,
+            "average_answer_time_seconds": 0.25045719794999743
+          },
+          "cost": {
+            "average_input_tokens": 221.23,
+            "average_output_tokens": 28.99,
+            "average_additional_tokens": 0.0,
+            "average_total_tokens": 250.22
+          }
+        },
+        {
+          "report_name": "query_rewrite_rag_report",
+          "config": {
+            "top_k": 5,
+            "chunk_size": 100
+          },
+          "ragas": {
+            "Faithfulness": 0.8315,
+            "Answer Relevancy": 0.7494544360738695,
+            "Context Precision": 0.5952499999629951,
+            "Context Recall": 0.783452380952381,
+            "Answer Correctness": 0.857695879542453,
+            "F1": 0.6765057291382707
+          },
+          "runtime": {
+            "average_retrieval_time_seconds": 0.5375731591799877,
+            "average_answer_time_seconds": 0.3140646453499858
+          },
+          "cost": {
+            "average_input_tokens": 261.97,
+            "average_output_tokens": 108.11,
+            "average_additional_tokens": 132.82,
+            "average_total_tokens": 370.08
+          }
+        }
+      ]
+    }
+  },
+  "Qwen3-Embedding 0.6B (ONNX)": {
+    "Gemma-4-E2B": {
+      "benchmark": [
+        {
+          "report_name": "grag_report",
+          "config": {
+            "top_k": 5,
+            "chunk_size": 100
+          },
+          "ragas": {
+            "Faithfulness": 0.8985935108662382,
+            "Answer Relevancy": 0.848852618420212,
+            "Context Precision": 0.6260555555051676,
+            "Context Recall": 0.7909642857142858,
+            "Answer Correctness": 0.6629751930119695,
+            "F1": 0.6989141166173913
+          },
+          "runtime": {
+            "average_retrieval_time_seconds": 0.44005487677998645,
+            "average_answer_time_seconds": 0.2784953088200018
+          },
+          "cost": {
+            "average_input_tokens": 346.55,
+            "average_output_tokens": 28.06,
+            "average_additional_tokens": 0.0,
+            "average_total_tokens": 374.61
+          }
+        },
+        {
+          "report_name": "rag_report",
+          "config": {
+            "top_k": 5,
+            "chunk_size": 100
+          },
+          "ragas": {
+            "Faithfulness": 0.9383333333333335,
+            "Answer Relevancy": 0.8485107403694266,
+            "Context Precision": 0.47363888885271055,
+            "Context Recall": 0.6988293650793651,
+            "Answer Correctness": 0.6082309539592452,
+            "F1": 0.5646084878866341
+          },
+          "runtime": {
+            "average_retrieval_time_seconds": 0.251376153389956,
+            "average_answer_time_seconds": 0.2179878152001038
+          },
+          "cost": {
+            "average_input_tokens": 188.06,
+            "average_output_tokens": 22.47,
+            "average_additional_tokens": 0.0,
+            "average_total_tokens": 210.53
+          }
+        },
+        {
+          "report_name": "hybrid_rag_report",
+          "config": {
+            "top_k": 5,
+            "chunk_size": 100
+          },
+          "ragas": {
+            "Faithfulness": 0.8614285714285714,
+            "Answer Relevancy": 0.8525731926901515,
+            "Context Precision": 0.4525277777419949,
+            "Context Recall": 0.6712301587301588,
+            "Answer Correctness": 0.5838746449998369,
+            "F1": 0.5405973692824586
+          },
+          "runtime": {
+            "average_retrieval_time_seconds": 0.26337425584999435,
+            "average_answer_time_seconds": 0.23498027422000634
+          },
+          "cost": {
+            "average_input_tokens": 185.8,
+            "average_output_tokens": 23.42,
+            "average_additional_tokens": 0.0,
+            "average_total_tokens": 209.22
+          }
+        },
+        {
+          "report_name": "hierarchical_rag_report",
+          "config": {
+            "top_k": 5,
+            "chunk_size": 100
+          },
+          "ragas": {
+            "Faithfulness": 0.94,
+            "Answer Relevancy": 0.8569855929261614,
+            "Context Precision": 0.4545555555204579,
+            "Context Recall": 0.6397738095238094,
+            "Answer Correctness": 0.6134013360979904,
+            "F1": 0.53149033313891
+          },
+          "runtime": {
+            "average_retrieval_time_seconds": 0.44645494460001145,
+            "average_answer_time_seconds": 0.4698478332500076
+          },
+          "cost": {
+            "average_input_tokens": 184.49,
+            "average_output_tokens": 23.87,
+            "average_additional_tokens": 0.0,
+            "average_total_tokens": 208.36
+          }
+        },
+        {
+          "report_name": "parent_child_rag_report",
+          "config": {
+            "top_k": 5,
+            "chunk_size": 100
+          },
+          "ragas": {
+            "Faithfulness": 0.884,
+            "Answer Relevancy": 0.8626365802344828,
+            "Context Precision": 0.4759444444059504,
+            "Context Recall": 0.6745238095238096,
+            "Answer Correctness": 0.6014739830754944,
+            "F1": 0.558095990334028
+          },
+          "runtime": {
+            "average_retrieval_time_seconds": 0.2243466267099893,
+            "average_answer_time_seconds": 0.23551906345001045
+          },
+          "cost": {
+            "average_input_tokens": 208.08,
+            "average_output_tokens": 23.27,
+            "average_additional_tokens": 0.0,
+            "average_total_tokens": 231.35
+          }
+        },
+        {
+          "report_name": "query_rewrite_rag_report",
+          "config": {
+            "top_k": 5,
+            "chunk_size": 100
+          },
+          "ragas": {
+            "Faithfulness": 0.9383333333333335,
+            "Answer Relevancy": 0.8485107403694266,
+            "Context Precision": 0.47363888885271055,
+            "Context Recall": 0.6888293650793651,
+            "Answer Correctness": 0.6082309539592452,
+            "F1": 0.5613166191536653
+          },
+          "runtime": {
+            "average_retrieval_time_seconds": 0.7209443727000416,
+            "average_answer_time_seconds": 0.22748409350001567
+          },
+          "cost": {
+            "average_input_tokens": 256.89,
+            "average_output_tokens": 75.07,
+            "average_additional_tokens": 121.22,
+            "average_total_tokens": 331.96
+          }
+        }
+      ]
+    },
+    "Qwen3.5-2B": {
+      "benchmark": [
+        {
+          "report_name": "grag_report",
+          "config": {
+            "top_k": 5,
+            "chunk_size": 100
+          },
+          "ragas": {
+            "Faithfulness": 0.8655381944444445,
+            "Answer Relevancy": 0.7289341524606197,
+            "Context Precision": 0.7574166666199008,
+            "Context Recall": 0.8406781760323176,
+            "Answer Correctness": 0.9078899175556555,
+            "F1": 0.7968784389964596
+          },
+          "runtime": {
+            "average_retrieval_time_seconds": 0.451797025689998,
+            "average_answer_time_seconds": 0.27724509307000517
+          },
+          "cost": {
+            "average_input_tokens": 352.0,
+            "average_output_tokens": 34.85,
+            "average_additional_tokens": 0.0,
+            "average_total_tokens": 386.85
+          }
+        },
+        {
+          "report_name": "rag_report",
+          "config": {
+            "top_k": 5,
+            "chunk_size": 100
+          },
+          "ragas": {
+            "Faithfulness": 0.8037714810442084,
+            "Answer Relevancy": 0.7165413061312065,
+            "Context Precision": 0.6130694444058862,
+            "Context Recall": 0.7748809523809524,
+            "Answer Correctness": 0.8401026562851258,
+            "F1": 0.6845429578127115
+          },
+          "runtime": {
+            "average_retrieval_time_seconds": 0.24962020455992387,
+            "average_answer_time_seconds": 0.2260502091300259
+          },
+          "cost": {
+            "average_input_tokens": 192.06,
+            "average_output_tokens": 30.07,
+            "average_additional_tokens": 0.0,
+            "average_total_tokens": 222.13
+          }
+        },
+        {
+          "report_name": "hybrid_rag_report",
+          "config": {
+            "top_k": 5,
+            "chunk_size": 100
+          },
+          "ragas": {
+            "Faithfulness": 0.7777777777777778,
+            "Answer Relevancy": 0.7679874333931789,
+            "Context Precision": 0.6192222221811621,
+            "Context Recall": 0.7650714285714286,
+            "Answer Correctness": 0.8455332089325416,
+            "F1": 0.6844634877430172
+          },
+          "runtime": {
+            "average_retrieval_time_seconds": 0.25225165135008865,
+            "average_answer_time_seconds": 0.32181132274996344
+          },
+          "cost": {
+            "average_input_tokens": 190.06,
+            "average_output_tokens": 48.99,
+            "average_additional_tokens": 0.0,
+            "average_total_tokens": 239.05
+          }
+        },
+        {
+          "report_name": "hierarchical_rag_report",
+          "config": {
+            "top_k": 5,
+            "chunk_size": 100
+          },
+          "ragas": {
+            "Faithfulness": 0.80993265993266,
+            "Answer Relevancy": 0.7251464899263672,
+            "Context Precision": 0.6000138888503685,
+            "Context Recall": 0.7908809523809524,
+            "Answer Correctness": 0.8374420377129859,
+            "F1": 0.6823514499998886
+          },
+          "runtime": {
+            "average_retrieval_time_seconds": 0.4459905065900193,
+            "average_answer_time_seconds": 0.21906735844000194
+          },
+          "cost": {
+            "average_input_tokens": 188.72,
+            "average_output_tokens": 28.75,
+            "average_additional_tokens": 0.0,
+            "average_total_tokens": 217.47
+          }
+        },
+        {
+          "report_name": "parent_child_rag_report",
+          "config": {
+            "top_k": 5,
+            "chunk_size": 100
+          },
+          "ragas": {
+            "Faithfulness": 0.744047619047619,
+            "Answer Relevancy": 0.7629590145001768,
+            "Context Precision": 0.6240138888461283,
+            "Context Recall": 0.7493809523809523,
+            "Answer Correctness": 0.8496501685133819,
+            "F1": 0.6809755043271422
+          },
+          "runtime": {
+            "average_retrieval_time_seconds": 0.21878703098001095,
+            "average_answer_time_seconds": 0.22314703806997385
+          },
+          "cost": {
+            "average_input_tokens": 222.31,
+            "average_output_tokens": 28.88,
+            "average_additional_tokens": 0.0,
+            "average_total_tokens": 251.19
+          }
+        },
+        {
+          "report_name": "query_rewrite_rag_report",
+          "config": {
+            "top_k": 5,
+            "chunk_size": 100
+          },
+          "ragas": {
+            "Faithfulness": 0.8037714810442084,
+            "Answer Relevancy": 0.715969578671647,
+            "Context Precision": 0.6130694444058862,
+            "Context Recall": 0.7748809523809524,
+            "Answer Correctness": 0.8400268223421691,
+            "F1": 0.6845429578127115
+          },
+          "runtime": {
+            "average_retrieval_time_seconds": 0.6573504716499702,
+            "average_answer_time_seconds": 0.2242888966099963
+          },
+          "cost": {
+            "average_input_tokens": 263.01,
+            "average_output_tokens": 93.08,
+            "average_additional_tokens": 133.76,
+            "average_total_tokens": 356.09
+          }
+        }
+      ]
+    }
+  }
+}

@@ -23,14 +23,14 @@ load_dotenv()
 BENCHMARK_DIR = Path(__file__).resolve().parents[1]
 PROJECT_ROOT = BENCHMARK_DIR.parent
 
-HF_DATASET_ID = "neural-bridge/rag-dataset-12000"
+HF_DATASET_ID = "neural-bridge/rag-dataset-12000" # "iam-tsr/ragmix"  # "neural-bridge/rag-dataset-12000"
 HF_DATASET_SPLIT = "test"
 
-EMB_MODEL = "onnx_models/qwen3_embed_0.6b/onnx/model.onnx"
-EMD_TOKENIZER = "onnx_models/qwen3_embed_0.6b"
+EMB_MODEL = "onnx_models/bge_m3/onnx/model.onnx"
+EMD_TOKENIZER = "onnx_models/bge_m3"
 MAX_LENGTH = 1024
-EMBEDDING_MODEL_LABEL = "Qwen3-Embedding 0.6B (ONNX)"
-BENCHMARK_LLM_LABEL = "Gemma-4-E2B"
+EMBEDDING_MODEL_LABEL = "BGE-M3 (ONNX)"
+BENCHMARK_LLM_LABEL = "Gemma-4-E2B" # "Gemma-4-E2B" # "Qwen3.5-2B"
 DEFAULT_TOP_K = 5
 DEFAULT_CHUNK_SIZE = 100
 
@@ -40,7 +40,7 @@ client = OpenAI(
 )
 LLM_MODEL = os.getenv("OPENAI_MODEL_NAME")
 
-embeddings = ONNXEmbedder(EMB_MODEL, EMD_TOKENIZER, MAX_LENGTH, batch_size=4, device="cuda")
+embeddings = ONNXEmbedder(EMB_MODEL, EMD_TOKENIZER, MAX_LENGTH, batch_size=4, device="cpu")
 
 
 @dataclass(frozen=True)

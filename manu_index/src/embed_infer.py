@@ -8,16 +8,16 @@ from langchain_core.embeddings import Embeddings
 
 class ONNXEmbedder(Embeddings):
     def __init__(
-            self, 
-            model: str, 
-            tokenizer: str, 
+            self,
+            model: str,
+            tokenizer: str,
             max_length: int,
             batch_size: int = 8,
             normalize: bool = True,
             device: str = "cpu"
     ):
         """Embeddings class that uses an ONNX model for generating embeddings.
-        
+
         Args:
             model: Path to the ONNX model file.
             tokenizer: Hugging Face model name or path for the tokenizer.
@@ -82,7 +82,7 @@ class ONNXEmbedder(Embeddings):
 
     def embed_documents(self, documents: List[str]) -> List[List[float]]:
         """Embed a list of documents and return their embeddings as lists of floats.
-        
+
         Args:
             documents: A list of strings, each representing a document to be embedded.
 
@@ -93,7 +93,7 @@ class ONNXEmbedder(Embeddings):
 
     def embed_query(self, text: str) -> List[float]:
         """Embed a single query string and return its embedding as a list of floats.
-        
+
         Args:
             text: A string representing the query to be embedded.
 
@@ -101,16 +101,16 @@ class ONNXEmbedder(Embeddings):
             A list of floats representing the embedding of the query.
         """
         return self.encode([text])[0].tolist()
-    
+
     def encode(
         self,
         texts: list[str]
     ) -> np.ndarray:
         """Encode a list of texts into their corresponding embeddings using the ONNX model.
-        
+
         Args:
             texts: A list of strings to be embedded.
-            
+
         Returns:
             A NumPy array of shape (num_texts, embedding_dim) containing the embeddings.
         """

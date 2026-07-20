@@ -1,10 +1,16 @@
 <img src="public/banner.png" alt="ManuIndex banner" width="100%">
 
-> Core implementation of **GRAG**: a document-aware retrieval pipeline built for heterogeneous RAG corpora.
+<div align="center">
+
+<p>Core implementation of **GRAG**: a document-aware retrieval pipeline built for heterogeneous RAG corpora.</p>
+
+<br>
 
 ![Python](https://img.shields.io/badge/Python-3.11%2B-1f6feb)
 ![License](https://img.shields.io/badge/License-MIT-2ea043)
 ![Focus](https://img.shields.io/badge/RAG-Document--Aware-0a7ea4)
+
+</div>
 
 ManuIndex is designed for the "document zoo" problem: policies, reports, minutes, contracts, research notes, schedules, and other formats often behave poorly when everything is dumped into one flat vector index.
 
@@ -42,19 +48,34 @@ flowchart TD
 
 ## Benchmark Snapshot
 
-The benchmark evaluates **7 retrieval pipelines** on a heterogeneous corpus of **25 documents** and **125 questions** with a fixed `top_k=3`.
+The suite compares **6 retrieval pipelines** (GRAG + 5 standard RAG variants) on **2 Hugging Face datasets**, **100 questions each**, with fixed `top_k=5` and a **2×2** matrix of ONNX embeddings × answer LLMs (BGE-M3 / Qwen3-Embedding 0.6B × Gemma-4-E2B / Qwen3.5-2B). Full tables, plots, and methodology live in [`benchmark/README.md`](benchmark/README.md).
 
-| Method Group | Avg F1 | Avg Context Recall | Avg End-to-End Time |
-| --- | ---: | ---: | ---: |
-| GRAG | **0.6631** | **0.7186** | **0.583s** |
-| Best non-GRAG flat / hierarchical baselines | 0.6237 | 0.6358 | slower |
-| Graph RAG | **0.9565** | **0.9473** | 3.681s |
+Averages below are over all **8** embedding × LLM panels (**4** per dataset).
+
+### Across both datasets
+
+| Method | Avg F1 | Avg Context Recall | Avg Faithfulness | Avg E2E Time | Avg Tokens |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| **GRAG** | **0.6432** | **0.7506** | **0.8449** | **0.757s** | 418 |
+| Parent–Child RAG | 0.5193 | 0.6414 | 0.7411 | 0.888s | 267 |
+| Flat Hybrid RAG | 0.5165 | 0.6502 | 0.7567 | 0.979s | 241 |
+| Naive RAG | 0.4957 | 0.6375 | 0.7563 | 0.980s | 244 |
+| Query Rewrite RAG | 0.4952 | 0.6363 | 0.7567 | 1.430s | 387 |
+| Hierarchical RAG | 0.4786 | 0.6141 | 0.7511 | 1.186s | **235** |
+
+### By dataset (GRAG vs best baseline)
+
+| Dataset | GRAG F1 | Best baseline F1 | GRAG Context Recall | GRAG E2E |
+| --- | ---: | ---: | ---: | ---: |
+| [Neural Bridge](https://huggingface.co/datasets/neural-bridge/rag-dataset-12000) | **0.7492** | 0.6300 (Parent–Child) | **0.8228** | **0.636s** |
+| [RAGMix](https://huggingface.co/datasets/iam-tsr/ragmix) | **0.5371** | 0.4320 (Flat Hybrid) | **0.6783** | **0.879s** |
 
 Interpretation:
 
-- **GRAG is the best efficiency-oriented system** in this repo's benchmark.
-- **Graph RAG is the quality leader overall**, but with materially higher latency and token cost.
-- GRAG improves retrieval quality over simpler flat baselines without turning into the most expensive pipeline.
+- **GRAG leads on F1 in every emb × LLM panel** on both datasets (8/8).
+- On average GRAG improves F1 by **~12–24 points** over the strongest non-GRAG baseline while also offering the **lowest mean end-to-end latency**.
+- Flat baselines use fewer tokens per answer, but **query rewrite spends almost as many tokens as GRAG** without matching quality.
+- RAGMix is harder overall; GRAG’s relative margin and latency advantage are larger there.
 
 ## Installation
 
@@ -83,13 +104,7 @@ Set these variables before running the examples:
 ```bash
 OPENAI_API_KEY=...
 OPENAI_MODEL_NAME=...
-OPENAI_BASE_URL=...   # optional for OpenAI-compatible endpoints
-```
-
-If you use the PDF image-analysis helper, also set:
-
-```bash
-GROQ_API_KEY=...
+OPENAI_BASE_URL=...
 ```
 
 ## Quick Start
@@ -105,25 +120,25 @@ client = OpenAI(
 )
 
 embeddings = ONNXEmbedder(
-    model="onnx_models/bge_m3/onnx/model_q4.onnx",
+    model="onnx_models/bge_m3/onnx/model.onnx",
     tokenizer="onnx_models/bge_m3",
     max_length=1024,
-    device="cpu",
+    device="cpu", # or "cuda" if you have a GPU
 )
 
+# Optional reranker for final candidate filtering
 reranker = ONNXReranker(
-    model="onnx_models/bge_reranker_v2_m3/onnx/model_q4.onnx",
+    model="onnx_models/bge_reranker_v2_m3/onnx/model.onnx",
     tokenizer="onnx_models/bge_reranker_v2_m3",
     max_length=1024,
-    device="cpu",
-    reranker_type="auto",
+    device="cpu", # or "cuda" if you have a GPU
+    reranker_type="auto", # automatically detects reranker type (classifier or decoder)
 )
 
 index = ManuIndex(
     client=client,
     model_name=os.environ["OPENAI_MODEL_NAME"],
     embeddings=embeddings,
-    persist_directory="manu_index_db",
 )
 
 index.add_document("sample.md")
@@ -148,8 +163,8 @@ for text in results:
 Main methods:
 
 ```python
-index.add_document(documents, chunk_size=500)
-index.search(query, top_k=3, top_c=5, lambda_mult=0.8, alpha=0.5, reranker=reranker)
+index.add_document(documents, chunk_size=100)
+index.search(query, top_k=3, top_c=5, lambda_mult=0.8, alpha=0.5)
 index.info()
 index.delete(doc_id)
 index.clear()
@@ -190,11 +205,11 @@ PDFs can be converted to Markdown before indexing, including optional image anal
 ```python
 import pymupdf
 import pymupdf4llm
-from pymupdf4llm.helpers.image_analyzer import GroqImageAnalyzer
+from pymupdf4llm.helpers.image_analyzer import OpenAIImageAnalyzer
 
-analyzer = GroqImageAnalyzer(
-    api_key="...",
-    model_name="meta-llama/llama-4-scout-17b-16e-instruct",
+analyzer = OpenAIImageAnalyzer(
+    api_key=os.getenv("OPENAI_API_KEY"),
+    model_name=os.getenv("OPENAI_MODEL_NAME")
 )
 
 with pymupdf.open("report.pdf") as document:
@@ -214,8 +229,8 @@ index.add_document(markdown)
 
 - Document summaries are generated with an LLM and stored as routing metadata.
 - Each indexed document gets its own FAISS and BM25 stores rather than joining all chunks into one global index.
-- `MATHS.md` contains the underlying retrieval formulations and scoring notes.
+- [`MATHS.md`](https://github.com/iam-tsr/ManuIndex/blob/main/MATHS.md) contains the underlying retrieval formulations and scoring notes.
 
 ## License
 
-MIT. See `LICENSE`.
+MIT. See [`LICENSE`](https://github.com/iam-tsr/ManuIndex/blob/main/LICENSE).

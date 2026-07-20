@@ -1,219 +1,254 @@
-# Benchmark Suite
+# GRAG Benchmark
 
-## Overview
+This directory contains the **end-to-end evaluation suite** for [ManuIndex / GRAG](../README.md) against a family of standard RAG pipelines.
 
-This benchmark evaluates retrieval quality, latency, and token usage for seven retrieval-augmented generation pipelines on a heterogeneous document corpus. The benchmark is designed for the document-zoo setting: real collections contain job descriptions, minutes, policy text, privacy notices, clinical material, research-style prose, schedules, and corporate documents, all of which impose different retrieval demands.
+The goal is not only to measure answer quality, but to show the **quality–latency–cost trade-off**: whether document-aware routing (GRAG) improves retrieval F1 and faithfulness without becoming the most expensive system.
 
-The central question is not whether a larger language model can compensate for weak retrieval, but whether retrieval structure itself improves grounded answering under a fixed question set and a fixed top-k budget.
+---
 
-## Research Objective
+## Table of Contents
 
-The benchmark examines three related claims:
+- [What We Measure](#what-we-measure)
+- [Evaluation Setup](#evaluation-setup)
+- [Methods Compared](#methods-compared)
+- [Directory Layout](#directory-layout)
+- [Results Overview](#results-overview)
+  - [Neural Bridge (`rag-dataset-12000`)](#1-neural-bridge-rag-dataset-12000)
+  - [RAGMix (`iam-tsr/ragmix`)](#2-ragmix-iam-tsrragmix)
+- [How to Read the Plots](#how-to-read-the-plots)
+- [Running the Benchmark](#running-the-benchmark)
+- [Generating Plots](#generating-plots)
+- [Report Format](#report-format)
+- [Metrics Definitions](#metrics-definitions)
+- [Reproducibility Notes](#reproducibility-notes)
 
-1. Retrieval architecture matters when the corpus is structurally heterogeneous.
-2. Document-aware retrieval can improve answer quality without increasing the final retrieval budget.
-3. Accuracy gains should be interpreted jointly with efficiency signals, especially latency and token consumption.
+---
 
-This makes the benchmark useful for both model comparison and retrieval-system design analysis.
+## What We Measure
 
-## Systems Evaluated
+Each method is run on the same evaluation cases with the same embedding model and answer LLM. For every question we record:
 
-The current report matrix compares seven retrieval families:
+| Axis | What it captures |
+| --- | --- |
+| **Quality (RAGAS)** | Faithfulness, answer relevancy, context precision/recall, answer correctness, and derived **F1** |
+| **Runtime** | Average retrieval time and average answer-generation time per question |
+| **Cost** | Average input / output / total tokens per question (including auxiliary LLM calls such as query rewrite) |
 
-1. `Naive RAG`
-   Fixed-size chunking with direct flat retrieval.
+Plots then put these axes together:
 
-2. `Flat Hybrid RAG`
-   Dense and sparse retrieval combined in a single flat retrieval space.
+- **Time vs F1** — efficiency frontier (higher and farther left is better)
+- **Tokens vs Faithfulness** — cost of grounded answers (higher and farther left is better)
 
-3. `Hierarchical RAG`
-   Multi-stage retrieval that first selects broader sections and then narrows to finer text units.
+---
 
-4. `Parent-Child RAG`
-   Retrieval using parent and child chunk relationships to preserve local context.
+## Evaluation Setup
 
-5. `Query Rewrite RAG`
-   A pipeline that reformulates the question before retrieval.
+### Datasets
 
-6. `Graph RAG`
-   A graph-oriented retrieval strategy with substantially richer context construction.
+Two public Hugging Face evaluation sets are used. Each run loads the `test` split and evaluates the **first 100 cases** (one question per document/context).
 
-7. `GRAG`
-   The document-aware retrieval design implemented in this repository. GRAG first routes a query toward the most relevant document collections and then retrieves evidence from within those selected collections.
+| Aggregate report | Hugging Face dataset | Notes |
+| --- | --- | --- |
+| `neural_bridge_report.json` | [`neural-bridge/rag-dataset-12000`](https://huggingface.co/datasets/neural-bridge/rag-dataset-12000) | Classic single-document RAG QA pairs |
+| `ragmix_report.json` | [`iam-tsr/ragmix`](https://huggingface.co/datasets/iam-tsr/ragmix) | More heterogeneous mix; generally harder for flat baselines |
 
-## Experimental Design
+Source documents are taken from the dataset row (`document` or `context`). Ground-truth answers come from the `answer` field.
 
-All systems are evaluated on the same benchmark corpus and question set.
-
-### Corpus Scale
-
-| Item | Value |
-| --- | ---: |
-| Documents | 25 |
-| Evaluation questions | 125 |
-| Questions per document | 5 |
-
-### Shared Retrieval Settings
+### Fixed protocol
 
 | Setting | Value |
-| --- | ---: |
-| Top-k contexts returned for answer generation | 3 |
-| Chunk size | 150 |
-
-### Embedding and Generator Matrix
-
-Each retrieval family is evaluated under four embedding-generator settings:
-
-| Embedding backend | Generator |
 | --- | --- |
-| BGE-M3 (ONNX) | Gemma-4-E2B |
-| BGE-M3 (ONNX) | Qwen3.5-2B |
-| Qwen3-Embedding 0.6B (ONNX) | Gemma-4-E2B |
-| Qwen3-Embedding 0.6B (ONNX) | Qwen3.5-2B |
+| Cases per run | 100 (first rows of `test`) |
+| `top_k` | 5 |
+| `chunk_size` | 100 (with method-specific overlap / hierarchy where applicable) |
+| Answer generation | OpenAI-compatible chat completion, `temperature=0`, `max_tokens=2048` |
+| System prompt | Answer **only** from retrieved context; refuse if context is insufficient |
+| Evaluation library | [RAGAS](https://github.com/explodinggradients/ragas) |
 
-The combined report therefore summarizes 28 system-condition pairs: 7 retrieval families across 4 model settings.
+### Model matrix
 
-## Evaluation Procedure
+Every method is evaluated on a **2 × 2** grid of embedding model × answer LLM:
 
-For each question, the benchmark runs the following sequence:
+| Embedding (ONNX) | Answer LLM |
+| --- | --- |
+| **BGE-M3** | **Gemma-4-E2B** |
+| **BGE-M3** | **Qwen3.5-2B** |
+| **Qwen3-Embedding 0.6B** | **Gemma-4-E2B** |
+| **Qwen3-Embedding 0.6B** | **Qwen3.5-2B** |
 
-1. Retrieve supporting context with the target pipeline.
-2. Generate an answer using only the retrieved context.
-3. Record retrieval latency, answer-generation latency, and token usage.
-4. Score outputs with RAGAS-based evaluation metrics.
+Embeddings run locally via ONNX Runtime (typically GPU). The answer LLM is reached through `OPENAI_API_KEY` / `OPENAI_BASE_URL` / `OPENAI_MODEL_NAME`.
 
-This design separates retrieval behavior from generation behavior while still reflecting end-to-end system performance.
+---
 
-## Metrics
+## Methods Compared
 
-The reports contain five primary RAGAS metrics plus a derived F1 score.
+| Method | Idea |
+| --- | --- |
+| **GRAG (ManuIndex)** | Document-aware index: summary routing, per-document hybrid retrieval, neighbor expansion |
+| **Naive RAG** | Flat chunking + dense FAISS similarity search |
+| **Flat Hybrid RAG** | Dense (MMR) + BM25 ensemble over a single flat index |
+| **Hierarchical RAG** | Retrieve sections first, then chunks inside selected sections |
+| **Parent–Child RAG** | Match fine-grained children, return parent spans for context |
+| **Query Rewrite RAG** | LLM rewrites the query, then dense retrieval (extra tokens + latency) |
 
-### Quality Metrics
+Baseline implementations live in `scripts/src/`. GRAG uses the library entrypoint `manu_index.ManuIndex` (ingested into a temporary persist directory per run).
 
-- `Context Recall`
-  Measures how much of the necessary supporting evidence is successfully retrieved.
+---
 
-- `F1`
-  A derived harmonic mean of context precision and context recall:
+## Results Overview
 
-  `F1 = 2 * P * R / (P + R)`
+Numbers below are taken from the checked-in aggregate reports. **F1** is the harmonic mean of context precision and context recall. **E2E** is average retrieval time + average answer time (seconds per question). **Toks** is average total tokens per question.
 
-  where `P` is context precision and `R` is context recall.
+### 1. Neural Bridge (`rag-dataset-12000`)
 
-### Efficiency Metrics
+On this set GRAG is consistently the **highest-F1** method across all four embedding × LLM panels, while remaining competitive on latency.
 
-- `Average retrieval time`
-- `Average answer time`
-- `Average end-to-end time`
-- `Average input tokens`
-- `Average output tokens`
-- `Average total tokens`
+#### BGE-M3 + Gemma-4-E2B
 
-These allow quality improvements to be assessed against practical cost and latency tradeoffs.
+| Method | F1 | Faithfulness | Context Recall | Context Precision | Answer Correctness | E2E (s) | Tokens |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| **GRAG** | **0.6906** | **0.9417** | 0.8131 | **0.6003** | 0.6983 | 0.554 | 376.6 |
+| Parent–Child | 0.6108 | 0.9272 | **0.8297** | 0.4832 | **0.6991** | **0.399** | 261.0 |
+| Flat Hybrid | 0.4995 | 0.9100 | 0.6779 | 0.3955 | 0.6151 | 0.352 | 211.1 |
+| Naive | 0.4806 | 0.9372 | 0.6785 | 0.3721 | 0.6267 | 0.353 | 210.3 |
+| Query Rewrite | 0.4806 | 0.9372 | 0.6785 | 0.3721 | 0.6267 | 0.778 | 331.8 |
+| Hierarchical | 0.4558 | 0.9047 | 0.6896 | 0.3404 | 0.6110 | 0.457 | **204.9** |
 
-## Comparison Tables
+#### BGE-M3 + Qwen3.5-2B
 
-### GRAG vs Other RAG Families Excluding Graph RAG
+| Method | F1 | Faithfulness | Context Recall | E2E (s) | Tokens |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| **GRAG** | **0.8103** | **0.8918** | **0.8466** | 0.544 | 390.8 |
+| Flat Hybrid | 0.6796 | 0.7942 | 0.7569 | **0.357** | 217.7 |
+| Naive | 0.6765 | 0.8315 | 0.7835 | 0.453 | 237.2 |
+| Query Rewrite | 0.6765 | 0.8315 | 0.7835 | 0.852 | 370.1 |
+| Parent–Child | 0.6701 | 0.7663 | 0.7714 | 0.384 | 250.2 |
+| Hierarchical | 0.6488 | 0.8283 | 0.7875 | 0.459 | **214.2** |
 
-This table isolates `GRAG` against the non-graph alternatives. It is useful when the research question is whether document-aware routing improves the quality-efficiency tradeoff over lighter or more conventional retrieval families.
+#### Qwen3-Embedding 0.6B + Gemma-4-E2B
 
-| Method | Avg F1 | Avg Context Recall |
-| --- | ---: | ---: |
-| Naive RAG | 0.6224 | 0.6341 |
-| Flat Hybrid RAG | 0.6237 | 0.6282 |
-| Hierarchical RAG | 0.5941 | 0.6163 |
-| Parent-Child RAG | 0.6163 | 0.6358 |
-| Query Rewrite RAG | 0.6224 | 0.6341 |
-| GRAG | **0.6631** | **0.7186** |
+| Method | F1 | Faithfulness | Context Recall | E2E (s) | Tokens |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| **GRAG** | **0.6989** | 0.8986 | **0.7910** | 0.719 | 374.6 |
+| Naive | 0.5646 | 0.9383 | 0.6988 | 0.469 | 210.5 |
+| Query Rewrite | 0.5613 | 0.9383 | 0.6888 | 0.948 | 332.0 |
+| Parent–Child | 0.5581 | 0.8840 | 0.6745 | **0.460** | 231.3 |
+| Flat Hybrid | 0.5406 | 0.8614 | 0.6712 | 0.498 | 209.2 |
+| Hierarchical | 0.5315 | **0.9400** | 0.6398 | 0.916 | **208.4** |
 
-Interpretation:
+#### Qwen3-Embedding 0.6B + Qwen3.5-2B
 
-- `GRAG` is the strongest method in this group on both average `F1` and average `Context Recall`.
-- `GRAG` also has the lowest average end-to-end latency in this subset.
+| Method | F1 | Faithfulness | Context Recall | E2E (s) | Tokens |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| **GRAG** | **0.7969** | **0.8655** | **0.8407** | 0.729 | 386.9 |
+| Naive | 0.6845 | 0.8038 | 0.7749 | 0.476 | 222.1 |
+| Query Rewrite | 0.6845 | 0.8038 | 0.7749 | 0.882 | 356.1 |
+| Flat Hybrid | 0.6845 | 0.7778 | 0.7651 | 0.574 | 239.1 |
+| Hierarchical | 0.6824 | 0.8099 | 0.7909 | 0.665 | **217.5** |
+| Parent–Child | 0.6810 | 0.7440 | 0.7494 | **0.442** | 251.2 |
 
-### GRAG vs Graph RAG
+#### Neural Bridge plots
 
-This table isolates the main frontier comparison in the benchmark: `GRAG` as the efficiency-oriented document-aware system versus `Graph RAG` as the highest-quality system.
+**Time vs F1** — GRAG (orange star) sits at the top of each panel; dashed lines mark GRAG’s reference F1 and latency.
 
-| Method | Avg F1 | Avg Context Recall | Avg Total Tokens | Avg End-to-End Time (s) |
-| --- | ---: | ---: | ---: | ---: |
-| GRAG | 0.6631 | 0.7186 | **370.84** | **0.583** |
-| Graph RAG | **0.9565** | **0.9473** | 1161.67 | 3.681 |
+![Neural Bridge: Time vs F1](plots/neural_bridge/time_vs_f1.png)
 
-Interpretation:
+**Tokens vs Faithfulness** — higher faithfulness at moderate token cost; query-rewrite pays extra tokens without matching GRAG quality.
 
-- `Graph RAG` is clearly superior on retrieval quality.
-- `GRAG` has the lowest token consumption and the lowest latency in this direct comparison.
-- The benchmark therefore supports a frontier view: `Graph RAG` optimizes for quality, while `GRAG` optimizes for efficiency with a clear quality gain over simpler baselines.
+![Neural Bridge: Tokens vs Faithfulness](plots/neural_bridge/tokens_vs_faithfulness.png)
 
-## Main Findings
+---
 
-### 1. Graph RAG dominates on quality
+### 2. RAGMix (`iam-tsr/ragmix`)
 
-Across all four model settings, Graph RAG achieves the best F1 score. It is the strongest system when the benchmark objective is raw retrieval completeness and answer support.
+RAGMix is a harder, more heterogeneous mix. Absolute F1 is lower for every method, but **relative ranking is stable**: GRAG leads on F1 in every panel, and often wins on end-to-end latency as well (baselines rebuild flat indexes per query/document in this harness).
 
-### 2. GRAG is the strongest efficiency-oriented method
+#### BGE-M3 + Gemma-4-E2B
 
-GRAG is the fastest method overall on average end-to-end latency, despite using substantially more tokens than the lightest baselines. This indicates that document-aware routing reduces retrieval time enough to matter at system level.
+| Method | F1 | Faithfulness | Context Recall | E2E (s) | Tokens |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| **GRAG** | **0.4777** | **0.9278** | **0.6805** | **0.785** | 447.1 |
+| Flat Hybrid | 0.3587 | 0.8511 | 0.5888 | 1.169 | 259.5 |
+| Parent–Child | 0.3089 | 0.8130 | 0.4923 | 1.064 | 269.5 |
+| Naive | 0.2945 | 0.8135 | 0.5227 | 1.171 | 260.1 |
+| Query Rewrite | 0.2945 | 0.8067 | 0.5227 | 1.641 | 411.2 |
+| Hierarchical | 0.2855 | 0.7642 | 0.4363 | 1.408 | **253.1** |
 
-### 3. GRAG improves quality over the lighter baseline family
+#### BGE-M3 + Qwen3.5-2B
 
-Compared with Naive RAG, Flat Hybrid RAG, Query Rewrite RAG, and most of the hierarchical alternatives, GRAG delivers a better average F1 and stronger context recall. In other words, GRAG is not the highest-quality system overall, but it improves the quality-efficiency frontier relative to simpler baselines.
+| Method | F1 | Faithfulness | Context Recall | E2E (s) | Tokens |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| **GRAG** | **0.6018** | **0.6698** | **0.6658** | **0.814** | 480.0 |
+| Parent–Child | 0.5102 | 0.5272 | 0.5733 | 0.959 | 281.0 |
+| Flat Hybrid | 0.5003 | 0.4972 | 0.6174 | 1.152 | 268.1 |
+| Naive | 0.4901 | 0.4451 | 0.5608 | 1.123 | 265.9 |
+| Query Rewrite | 0.4901 | 0.4451 | 0.5608 | 1.569 | 431.7 |
+| Hierarchical | 0.4763 | 0.4852 | 0.5742 | 1.319 | **261.7** |
 
-### 4. Quality and efficiency are not aligned
+#### Qwen3-Embedding 0.6B + Gemma-4-E2B
 
-The highest-quality system is not the cheapest or fastest. Graph RAG produces the best retrieval quality, but it does so with the highest token usage by a large margin. This benchmark therefore supports a tradeoff interpretation rather than a single “best model” conclusion.
+| Method | F1 | Faithfulness | Context Recall | E2E (s) | Tokens |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| **GRAG** | **0.4563** | **0.9165** | **0.6665** | **0.988** | 439.5 |
+| Flat Hybrid | 0.3458 | 0.8865 | 0.5245 | 1.922 | 261.2 |
+| Parent–Child | 0.3216 | 0.7988 | 0.4967 | 1.623 | 276.9 |
+| Naive | 0.3055 | 0.7928 | 0.5285 | 1.885 | 256.6 |
+| Query Rewrite | 0.3055 | 0.8028 | 0.5285 | 2.397 | 407.9 |
+| Hierarchical | 0.3042 | 0.8300 | 0.4800 | 2.146 | **253.4** |
 
-## How to Read the Plots
+#### Qwen3-Embedding 0.6B + Qwen3.5-2B
 
-Two summary figures are most useful for interpretation:
+| Method | F1 | Faithfulness | Context Recall | E2E (s) | Tokens |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| **GRAG** | **0.6128** | **0.6477** | **0.7004** | **0.928** | 451.1 |
+| Flat Hybrid | 0.5230 | 0.4755 | 0.6002 | 1.808 | 264.4 |
+| Parent–Child | 0.4939 | 0.4679 | 0.5438 | 1.772 | 317.6 |
+| Naive | 0.4689 | 0.4885 | 0.5525 | 1.915 | 285.6 |
+| Query Rewrite | 0.4689 | 0.4885 | 0.5525 | 2.371 | 451.4 |
+| Hierarchical | 0.4445 | 0.4465 | 0.5148 | 2.118 | **265.0** |
 
-### Overall Efficiency Comparison
+#### RAGMix plots
 
-This plot reports a single average latency value per retrieval family, aggregated across all benchmark settings. Shorter bars indicate lower end-to-end latency.
+**Time vs F1** — GRAG dominates the upper-left region on every emb × LLM panel.
 
-Interpretation:
+![RAGMix: Time vs F1](plots/ragmix/time_vs_f1.png)
 
-- If latency is the main deployment constraint, this plot is the fastest high-level summary.
-- GRAG should be read here as a retrieval architecture that prioritizes speed without collapsing quality.
+**Tokens vs Faithfulness** — GRAG preserves high faithfulness (especially with Gemma) while query rewrite spends similar tokens for weaker groundedness.
 
-### Cost-Quality Tradeoff
+![RAGMix: Tokens vs Faithfulness](plots/ragmix/tokens_vs_faithfulness.png)
 
-This plot places average total tokens on the x-axis and F1 on the y-axis for each embedding-generator setting.
+---
 
-Interpretation:
+## Metrics Definitions
 
-- Upper-left is preferable: higher quality at lower token cost.
-- Systems farther right consume more context budget.
-- Systems higher up recover more relevant evidence.
-- A method that appears favorable in latency may still be weak on quality or expensive in prompt budget.
+| Metric | Role |
+| --- | --- |
+| **Context Precision** | Fraction of retrieved contexts that are relevant to the question / reference |
+| **Context Recall** | How completely the retrieved contexts cover the reference answer |
+| **F1** | $(2 \cdot P \cdot R / (P + R))$ over context precision and context recall |
+| **Faithfulness** | Whether the generated answer is supported by the retrieved contexts |
+| **Answer Relevancy** | Whether the answer addresses the user question |
+| **Answer Correctness** | Semantic agreement with the ground-truth answer |
+| **E2E time** | `avg_retrieval_time + avg_answer_time` (seconds / question) |
+| **Total tokens** | Prompt + completion tokens for answering, plus auxiliary calls (e.g. rewrites) |
 
-## Interpretation for Research Use
+RAGAS evaluation uses the same OpenAI-compatible LLM and the same ONNX embedder as the run (via LangChain wrappers).
 
-The benchmark supports a more careful conclusion than “one method wins.”
+---
 
-- If the objective is maximum answer support and retrieval completeness, Graph RAG is the best-performing family in the current report set.
-- If the objective is balanced deployment efficiency with a clear quality gain over basic flat retrieval, GRAG is the more attractive operating point.
-- If the objective is low token usage with minimal system complexity, Naive RAG and Flat Hybrid RAG remain relevant baselines, though they are clearly weaker on context recall than the top systems.
+## Reproducibility Notes
 
-## Reproducing the Benchmark
+- **Same cases for all methods** within a dataset configuration (first 100 `test` rows).
+- **Temperature 0** for answer generation to reduce variance.
+- Baselines build retrieval indexes **per document/query** inside the harness; GRAG ingests all evaluation documents once into a temporary ManuIndex. Compare quality metrics and token cost directly; interpret absolute retrieval latency with that indexing difference in mind.
+- Query-rewrite token usage includes rewrite calls (see `average_additional_tokens` / elevated output tokens).
 
-At a high level, reproduction consists of:
+---
 
-1. Running each retrieval family on the shared evaluation set.
-2. Saving per-method reports with quality, runtime, and token statistics.
-3. Aggregating those results into the combined benchmark report.
-4. Regenerating the summary plots for efficiency and cost-quality tradeoff analysis.
+## Takeaways
 
-The key requirement is to keep the evaluation set, retrieval budget, and chunking settings fixed across methods so that the comparison remains controlled.
-
-## Recommended Reporting Language
-
-For paper-style summaries, the most defensible phrasing is:
-
-- Graph RAG achieves the highest benchmark quality.
-- GRAG provides the best average end-to-end efficiency.
-- GRAG improves the quality-efficiency tradeoff over simpler flat baselines.
-- Retrieval architecture choice should therefore depend on the target operating point rather than on F1 alone.
-
-That framing is faithful to the benchmark evidence and avoids overstating the results.
+1. **GRAG leads on F1** on both Neural Bridge and RAGMix for every embedding × LLM pair in the checked-in results.
+2. On **Neural Bridge**, simpler methods can be slightly faster or cheaper per question, but they lag on context precision/F1; Parent–Child is the strongest non-GRAG baseline on Gemma + BGE.
+3. On **RAGMix**, GRAG often improves **both** F1 and end-to-end time relative to flat rebuild baselines, while keeping faithfulness high (especially with Gemma).
+4. **Query rewrite** increases tokens and latency without closing the F1 gap to GRAG.
+5. Use the **Time vs F1** and **Tokens vs Faithfulness** plots above for a compact multi-axis comparison when presenting results.

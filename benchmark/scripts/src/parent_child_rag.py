@@ -17,13 +17,13 @@ class ParentChildRAG:
         self.child_chunk_size = child_chunk_size
 
     def get_parent_chunks(self, document: str):
-        return split_documents(document, chunk_size=self.parent_chunk_size, chunk_overlap=0)
+        return split_documents(document, chunk_size=self.parent_chunk_size, chunk_overlap=30)
 
     def get_child_chunks(self, parent_chunks):
         child_chunks = []
         for parent_index, parent in enumerate(parent_chunks):
             for child_index, child in enumerate(
-                split_documents(parent.page_content, chunk_size=self.child_chunk_size, chunk_overlap=30)
+                split_documents(parent.page_content, chunk_size=self.child_chunk_size, chunk_overlap=0)
             ):
                 child.metadata["parent_index"] = parent_index
                 child.metadata["child_index"] = child_index

@@ -11,7 +11,7 @@ from .src import ParentChildRAG
 parent_child_rag = ParentChildRAG(
     embeddings=embeddings,
     top_k=config.top_k,
-    parent_chunk_size=config.chunk_size,
+    parent_chunk_size=150,
     child_chunk_size=config.chunk_size,
 )
 
