@@ -1,13 +1,17 @@
 import json
 import os
+import re
+import string
 import time
+import uuid
+from collections import Counter
 from dataclasses import asdict, dataclass, is_dataclass
 from pathlib import Path
 from typing import Any
 
+import evaluate as hf_evaluate
 from datasets import Dataset, load_dataset
 from dotenv import load_dotenv
-from huggingface_hub import hf_hub_download, list_repo_files
 from openai import OpenAI
 from ragas import evaluate as ragas_evaluate
 from ragas import metrics as ragas_metrics
@@ -23,16 +27,15 @@ load_dotenv()
 BENCHMARK_DIR = Path(__file__).resolve().parents[1]
 PROJECT_ROOT = BENCHMARK_DIR.parent
 
-HF_DATASET_ID = "neural-bridge/rag-dataset-12000" # "iam-tsr/ragmix"  # "neural-bridge/rag-dataset-12000"
+HF_DATASET_ID = "iam-tsr/ragmix" # "iam-tsr/ragmix"  # "neural-bridge/rag-dataset-12000"
 HF_DATASET_SPLIT = "test"
 
 EMB_MODEL = "onnx_models/bge_m3/onnx/model.onnx"
 EMD_TOKENIZER = "onnx_models/bge_m3"
 MAX_LENGTH = 1024
-EMBEDDING_MODEL_LABEL = "BGE-M3 (ONNX)"
+EMBEDDING_MODEL_LABEL = "BGE-M3 (ONNX)" # BGE-M3 (ONNX) # Qwen3-Embedding 0.6B (ONNX)
 BENCHMARK_LLM_LABEL = "Gemma-4-E2B" # "Gemma-4-E2B" # "Qwen3.5-2B"
 DEFAULT_TOP_K = 5
-DEFAULT_CHUNK_SIZE = 100
 
 client = OpenAI(
     api_key=os.getenv("OPENAI_API_KEY"),
@@ -40,13 +43,12 @@ client = OpenAI(
 )
 LLM_MODEL = os.getenv("OPENAI_MODEL_NAME")
 
-embeddings = ONNXEmbedder(EMB_MODEL, EMD_TOKENIZER, MAX_LENGTH, batch_size=4, device="cpu")
+embeddings = ONNXEmbedder(EMB_MODEL, EMD_TOKENIZER, MAX_LENGTH, batch_size=4, device="cuda")
 
 
 @dataclass(frozen=True)
 class BenchmarkConfig:
     top_k: int = DEFAULT_TOP_K
-    chunk_size: int = DEFAULT_CHUNK_SIZE
     emb_model: str = EMBEDDING_MODEL_LABEL
     llm_model: str = BENCHMARK_LLM_LABEL
 
@@ -103,7 +105,7 @@ def load_evaluation_cases(
     if dataset_id != HF_DATASET_ID:
         raise ValueError(f"Only {HF_DATASET_ID!r} is supported (got {dataset_id!r})")
 
-    ds = _load_dataset(split=split).select(range(100)) # Limit to first 100 cases for benchmarking
+    ds = _load_dataset(split=split).select(range(2)) # Limit to first 100 cases for benchmarking
 
     cases: list[dict] = []
 
@@ -244,7 +246,16 @@ def configure_ragas_metric(metric, ragas_llm, ragas_embeddings):
         metric.embeddings = ragas_embeddings
 
 
+def _context_f1(precision: float, recall: float) -> float:
+    """Harmonic mean of context precision and context recall."""
+    denom = precision + recall
+    if denom <= 0:
+        return 0.0
+    return 2.0 * precision * recall / denom
+
+
 def run_ragas(results: list[dict]) -> dict:
+    """Run RAGAS metrics: faithfulness, context_precision, context_recall, plus Context F1."""
     ragas_llm = llm_factory(model=require_llm_model(), provider="openai", client=client)
     ragas_embeddings = LangchainEmbeddingsWrapper(embeddings)
 
@@ -261,10 +272,8 @@ def run_ragas(results: list[dict]) -> dict:
 
     requested_metrics = [
         ("Faithfulness", get_ragas_metric("faithfulness")),
-        ("Answer Relevancy", get_ragas_metric("answer_relevancy", "answer_relevance")),
         ("Context Precision", get_ragas_metric("context_precision")),
         ("Context Recall", get_ragas_metric("context_recall")),
-        ("Answer Correctness", get_ragas_metric("answer_correctness")),
     ]
     metrics = []
     labels_by_column = {}
@@ -289,31 +298,131 @@ def run_ragas(results: list[dict]) -> dict:
         else:
             skipped_metrics.append(label)
 
-    context_precision = mean_scores.get("Context Precision")
-    context_recall = mean_scores.get("Context Recall")
-    if isinstance(context_precision, float) and isinstance(context_recall, float):
-        denominator = context_precision + context_recall
-        mean_scores["F1"] = (
-            0.0 if denominator == 0 else (2 * context_precision * context_recall) / denominator
-        )
+    precision = mean_scores.get("Context Precision")
+    recall = mean_scores.get("Context Recall")
+    if precision is not None and recall is not None:
+        mean_scores["Context F1"] = _context_f1(float(precision), float(recall))
+    else:
+        skipped_metrics.append("Context F1")
 
     if skipped_metrics:
         mean_scores["skipped_metrics"] = sorted(set(skipped_metrics))
     return mean_scores
 
 
-def display_report(report_title: str, ragas_scores: dict, summary: dict, elapsed: float):
+_SQUAD_ARTICLES = re.compile(r"\b(a|an|the)\b", re.UNICODE)
+_SQUAD_PUNCT = set(string.punctuation)
+
+
+def _normalize_squad_answer(text: str) -> str:
+    """SQuAD-style normalization used by HuggingFace evaluate for token metrics."""
+    text = text.lower()
+    text = "".join(ch for ch in text if ch not in _SQUAD_PUNCT)
+    text = _SQUAD_ARTICLES.sub(" ", text)
+    return " ".join(text.split())
+
+
+def _token_level_recall(prediction: str, reference: str) -> float:
+    """Token-level answer recall: |pred ∩ ref| / |ref| (SQuAD tokenization)."""
+    pred_tokens = _normalize_squad_answer(prediction).split()
+    ref_tokens = _normalize_squad_answer(reference).split()
+    if not pred_tokens and not ref_tokens:
+        return 1.0
+    if not pred_tokens or not ref_tokens:
+        return 0.0
+    common = Counter(pred_tokens) & Counter(ref_tokens)
+    num_same = sum(common.values())
+    if num_same == 0:
+        return 0.0
+    return num_same / len(ref_tokens)
+
+
+def run_hf_evaluate(results: list[dict]) -> dict:
+    """Compute Answer F1 (SQuAD token F1) and Answer Recall via HuggingFace evaluate."""
+    if not results:
+        return {"Answer F1": 0.0, "Answer Recall": 0.0}
+
+    squad = hf_evaluate.load("squad")
+    predictions = [
+        {"id": str(result["id"]), "prediction_text": result["answer"]}
+        for result in results
+    ]
+    references = [
+        {
+            "id": str(result["id"]),
+            "answers": {"text": [result["ground_truth"]], "answer_start": [0]},
+        }
+        for result in results
+    ]
+    squad_scores = squad.compute(predictions=predictions, references=references)
+    # HF SQuAD metric returns percentages in [0, 100]; normalize to [0, 1].
+    answer_f1 = float(squad_scores["f1"]) / 100.0
+
+    recalls = [
+        _token_level_recall(result["answer"], result["ground_truth"])
+        for result in results
+    ]
+    answer_recall = sum(recalls) / len(recalls)
+
+    return {
+        "Answer F1": answer_f1,
+        "Answer Recall": answer_recall,
+    }
+
+
+EVALUATION_METRIC_ORDER = (
+    "Faithfulness",
+    "Context Precision",
+    "Context Recall",
+    "Answer Recall",
+    "Answer F1",
+    "Context F1",
+)
+
+
+def build_evaluation_scores(
+    ragas_scores: dict,
+    hf_scores: dict | None = None,
+) -> dict:
+    """Merge RAGAS + HF scores into the ordered evaluation block."""
+    combined = dict(ragas_scores)
+    if hf_scores:
+        combined.update(hf_scores)
+    # Backward-compatible alias if an older caller still returns Token F1.
+    if "Answer F1" not in combined and "Token F1" in combined:
+        combined["Answer F1"] = combined["Token F1"]
+
+    evaluation: dict[str, Any] = {}
+    for key in EVALUATION_METRIC_ORDER:
+        if key in combined and combined[key] is not None:
+            evaluation[key] = float(combined[key])
+    return evaluation
+
+def _format_score_line(key: str, value: Any) -> str:
+    if isinstance(value, float):
+        return f"  {key:<28} {value:.4f}"
+    return f"  {key:<28} {value}"
+
+
+def display_report(
+    report_title: str,
+    ragas_scores: dict,
+    summary: dict,
+    elapsed: float,
+    hf_scores: dict | None = None,
+):
     sep = "─" * 52
     runtime = summary["runtime"]
     cost = summary["cost"]
+    evaluation = build_evaluation_scores(ragas_scores, hf_scores)
     print(f"\n{'═' * 52}")
     print(f"  {report_title}")
     print(f"{'═' * 52}")
 
-    print("\n  RAGAS")
+    print("\n  Evaluation")
     print(sep)
-    for key, value in ragas_scores.items():
-        print(f"  {key:<28} {value:.4f}" if isinstance(value, float) else f"  {key:<28} {value}")
+    for key, value in evaluation.items():
+        print(_format_score_line(key, value))
 
     print("\n  Runtime")
     print(sep)
@@ -330,7 +439,14 @@ def display_report(report_title: str, ragas_scores: dict, summary: dict, elapsed
     print(f"{'═' * 52}\n")
 
 
-def save_report(report_path: Path, config: Any, results: list[dict], ragas_scores: dict, summary: dict):
+def save_report(
+    report_path: Path,
+    config: Any,
+    results: list[dict],
+    ragas_scores: dict,
+    summary: dict,
+    hf_scores: dict | None = None,
+):
     if is_dataclass(config):
         config_data = asdict(config)
     elif isinstance(config, dict):
@@ -340,14 +456,13 @@ def save_report(report_path: Path, config: Any, results: list[dict], ragas_score
 
     report = {
         "config": config_data,
-        "ragas": ragas_scores,
+        "evaluation": build_evaluation_scores(ragas_scores, hf_scores),
         "runtime": summary["runtime"],
         "cost": summary["cost"],
-        "per_question": results,
     }
+    report_path = Path(f"{report_path}_{uuid.uuid4().hex[:11]}.json")
     report_path.write_text(json.dumps(report, indent=2), encoding="utf-8")
     print(f"  Report saved → {report_path}")
-
 
 def run_family_benchmark(
     *,
@@ -359,13 +474,23 @@ def run_family_benchmark(
     cases = load_evaluation_cases()
     start_time = time.time()
 
-    print(f"\n[1/2] Running {run_label} queries …")
+    print(f"\n[1/3] Running {run_label} queries …")
     results = collect_results(cases, retriever)
     summary = summarize_results(results)
 
-    print("\n[2/2] RAGAS evaluation …")
+    print("\n[2/3] RAGAS evaluation …")
     ragas_scores = run_ragas(results)
 
+    print("\n[3/3] HuggingFace evaluation …")
+    hf_scores = run_hf_evaluate(results)
+
     elapsed = time.time() - start_time
-    display_report(report_title, ragas_scores, summary, elapsed)
-    save_report(BENCHMARK_DIR / "reports" / report_filename, config, results, ragas_scores, summary)
+    display_report(report_title, ragas_scores, summary, elapsed, hf_scores=hf_scores)
+    save_report(
+        BENCHMARK_DIR / "reports" / report_filename,
+        config,
+        results,
+        ragas_scores,
+        summary,
+        hf_scores=hf_scores,
+    )

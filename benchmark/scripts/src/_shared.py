@@ -9,7 +9,7 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 def split_documents(
     text: str,
     chunk_size: int,
-    chunk_overlap: int = 30,
+    chunk_overlap: int = 0,
 ) -> list[Document]:
     splitter = RecursiveCharacterTextSplitter(
         chunk_size=chunk_size,

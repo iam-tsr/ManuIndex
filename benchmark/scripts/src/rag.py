@@ -7,15 +7,15 @@ class NaiveRAG:
     def __init__(
         self,
         embeddings,
-        top_k: int,
-        chunk_size: int,
+        top_k: int = 5,
+        chunk_size: int = 150,
     ):
         self.chunk_size = chunk_size
         self.top_k = top_k
         self.embeddings = embeddings
 
     def get_chunks(self, document: str):
-        return split_documents(document, chunk_size=self.chunk_size, chunk_overlap=30)
+        return split_documents(document, chunk_size=self.chunk_size, chunk_overlap=50)
 
     def get_vector_store(self, chunks):
         return FAISS.from_documents(chunks, embedding=self.embeddings)

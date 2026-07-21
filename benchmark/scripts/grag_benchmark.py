@@ -1,8 +1,9 @@
 """
 ManuIndex Benchmark Evaluation Pipeline
 ========================================
-Metrics: RAGAS (faithfulness, answer relevancy, context precision,
-         context recall, answer correctness)
+Metrics:
+  RAGAS — faithfulness, context precision, context recall
+  HuggingFace evaluate — Token-level F1, Answer Recall
 """
 
 import tempfile
@@ -20,6 +21,7 @@ from ._common import (
     load_evaluation_cases,
     display_report,
     require_llm_model,
+    run_hf_evaluate,
     run_ragas,
     save_report,
     summarize_results,
@@ -37,7 +39,7 @@ def ingest_documents(cases: list[dict], persist_dir: str) -> ManuIndex:
         doc_key = str(case["file"])
         if doc_key not in files_added:
             print(f"  Ingesting {doc_key} …")
-            db.add_document(case_document_text(case), chunk_size=config.chunk_size)
+            db.add_document(case_document_text(case), chunk_size=150)
             files_added.add(doc_key)
     return db
 
@@ -47,7 +49,7 @@ def collect_results(db: ManuIndex, cases: list[dict]) -> list[dict]:
     for case in cases:
         for q in case["questions"]:
             retrieval_start = time.perf_counter()
-            contexts = db.search(query=q["question"], top_k=config.top_k, lambda_mult=0.8, alpha=0.5)
+            contexts = db.search(query=q["question"], top_k=config.top_k, lambda_mult=0.9, alpha=0.5)
             retrieval_time = time.perf_counter() - retrieval_start
 
             answer_start = time.perf_counter()
@@ -75,20 +77,36 @@ def main():
     with tempfile.TemporaryDirectory(prefix="manu_eval_") as persist_dir:
         t0 = time.time()
 
-        print("\n[1/3] Ingesting documents …")
+        print("\n[1/4] Ingesting documents …")
         db = ingest_documents(cases, persist_dir)
 
-        print("\n[2/3] Running queries …")
+        print("\n[2/4] Running queries …")
         results = collect_results(db, cases)
         summary = summarize_results(results)
 
-        print("\n[3/3] RAGAS evaluation …")
+        print("\n[3/4] RAGAS evaluation …")
         ragas_scores = run_ragas(results)
+
+        print("\n[4/4] HuggingFace evaluation …")
+        hf_scores = run_hf_evaluate(results)
 
         elapsed = time.time() - t0
 
-    display_report("ManuIndex Benchmark Report", ragas_scores, summary, elapsed)
-    save_report(BENCHMARK_DIR / "reports" / "grag_report.json", config, results, ragas_scores, summary)
+    display_report(
+        "ManuIndex Benchmark Report",
+        ragas_scores,
+        summary,
+        elapsed,
+        hf_scores=hf_scores,
+    )
+    save_report(
+        BENCHMARK_DIR / "reports" / "grag",
+        config,
+        results,
+        ragas_scores,
+        summary,
+        hf_scores=hf_scores,
+    )
 
 
 if __name__ == "__main__":

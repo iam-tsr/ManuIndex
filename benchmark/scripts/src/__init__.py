@@ -1,5 +1,5 @@
 from .rag import NaiveRAG
-from .hybrid_rag import FlatHybridRAG
+from .hybrid_rag import HybridRAG
 from .hierarchical_rag import HierarchicalRAG
-from .parent_child_rag import ParentChildRAG
+from .long_rag import LongRAG
 from .query_rewrite_rag import QueryRewriteRAG

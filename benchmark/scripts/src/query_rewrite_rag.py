@@ -9,9 +9,9 @@ class QueryRewriteRAG:
     def __init__(
         self,
         embeddings,
-        top_k: int = 3,
+        top_k: int = 5,
         chunk_size: int = 150,
-        rewrite_count: int = 3,
+        rewrite_count: int = 2,
         client=None,
         model_name: str | None = None,
     ):
@@ -29,7 +29,7 @@ class QueryRewriteRAG:
         }
 
     def get_chunks(self, document: str):
-        return split_documents(document, chunk_size=self.chunk_size, chunk_overlap=30)
+        return split_documents(document, chunk_size=self.chunk_size, chunk_overlap=50)
 
     def _estimate_text_tokens(self, text: str) -> int:
         # Rough approximation for accounting when provider usage is unavailable.

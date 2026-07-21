@@ -1,8 +1,9 @@
 """
-Hierarchical RAG Benchmark Evaluation Pipeline
-==============================================
-Metrics: RAGAS (faithfulness, answer relevancy, context precision,
-         context recall, answer correctness)
+Hierarchical (H-RAG) Parent–Child Benchmark Evaluation Pipeline
+===============================================================
+Metrics:
+  RAGAS — faithfulness, context precision, context recall
+  HuggingFace evaluate — Token-level F1, Answer Recall
 """
 
 from ._common import config, embeddings, run_family_benchmark
@@ -11,16 +12,17 @@ from .src import HierarchicalRAG
 hierarchical_rag = HierarchicalRAG(
     embeddings=embeddings,
     top_k=config.top_k,
-    section_top_k=config.chunk_size,
-    chunk_size=config.chunk_size,
+    parent_chunk_size=512,
+    child_window_sentences=1,
+    child_stride_sentences=1,
 )
 
 
 def main():
     run_family_benchmark(
-        report_title="Hierarchical RAG Benchmark Report",
-        run_label="hierarchical RAG",
-        report_filename="hierarchical_rag_report.json",
+        report_title="Hierarchical H-RAG Parent–Child Benchmark Report",
+        run_label="hierarchical H-RAG",
+        report_filename="hierarchical_rag",
         retriever=hierarchical_rag,
     )
 
