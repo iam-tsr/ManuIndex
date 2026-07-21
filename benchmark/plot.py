@@ -17,7 +17,7 @@ METHOD_ORDER = [
     "naive_rag",
     "flat_hybrid_rag",
     "hierarchical_rag",
-    "parent_child_rag",
+    "long_rag",
     "query_rewrite_rag",
 ]
 
@@ -25,8 +25,8 @@ METHOD_LABELS = {
     "grag": "GRAG",
     "naive_rag": "Naive",
     "flat_hybrid_rag": "Flat Hybrid",
-    "hierarchical_rag": "Hierarchical",
-    "parent_child_rag": "Parent-Child",
+    "hierarchical_rag": "Hierarchical (H-RAG)",
+    "long_rag": "LongRAG",
     "query_rewrite_rag": "Query Rewrite",
 }
 
@@ -35,7 +35,7 @@ METHOD_MARKERS = {
     "naive_rag": "o",
     "flat_hybrid_rag": "s",
     "hierarchical_rag": "^",
-    "parent_child_rag": "D",
+    "long_rag": "D",
     "query_rewrite_rag": "P",
 }
 
@@ -51,7 +51,7 @@ REPORT_METHOD_MAP = {
     "hybrid_rag_report": "flat_hybrid_rag",
     "flat_hybrid_rag_report": "flat_hybrid_rag",
     "hierarchical_rag_report": "hierarchical_rag",
-    "parent_child_rag_report": "parent_child_rag",
+    "long_rag_report": "long_rag",
     "query_rewrite_rag_report": "query_rewrite_rag",
 }
 
@@ -96,7 +96,25 @@ def load_records(report_path: Path) -> tuple[list[dict], list[tuple[str, str]]]:
 
                 runtime = method_metrics["runtime"]
                 cost = method_metrics["cost"]
-                ragas = method_metrics["ragas"]
+                evaluation = method_metrics.get("evaluation") or {}
+                ragas = method_metrics.get("ragas") or {}
+                huggingface = method_metrics.get("huggingface") or {}
+
+                # Prefer unified evaluation block; fall back to legacy split sections.
+                if evaluation:
+                    if "Answer F1" in evaluation:
+                        f1 = float(evaluation["Answer F1"])
+                    elif "Token F1" in evaluation:
+                        f1 = float(evaluation["Token F1"])
+                    else:
+                        f1 = float(evaluation.get("Context F1", evaluation.get("F1", 0.0)))
+                    faithfulness = float(evaluation["Faithfulness"])
+                elif "Token F1" in huggingface:
+                    f1 = float(huggingface["Token F1"])
+                    faithfulness = float(ragas["Faithfulness"])
+                else:
+                    f1 = float(ragas["F1"])
+                    faithfulness = float(ragas["Faithfulness"])
 
                 records.append(
                     {
@@ -106,8 +124,8 @@ def load_records(report_path: Path) -> tuple[list[dict], list[tuple[str, str]]]:
                         "method": method_name,
                         "label": METHOD_LABELS[method_name],
                         "is_grag": method_name == "grag",
-                        "f1": float(ragas["F1"]),
-                        "faithfulness": float(ragas["Faithfulness"]),
+                        "f1": f1,
+                        "faithfulness": faithfulness,
                         "total_tokens": float(cost["average_total_tokens"]),
                         "total_time_seconds": float(
                             runtime["average_retrieval_time_seconds"]
