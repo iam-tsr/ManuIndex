@@ -93,9 +93,9 @@ class ManuIndex:
         self,
         query: str,
         top_k: int = 5,
-        top_c: int = 3,
-        lambda_mult: float = 0.9,
-        alpha: float = 0.7,
+        top_c: int = 5,
+        lambda_mult: float = 0.8,
+        alpha: float = 0.5,
         reranker: ONNXReranker | None = None,
     ) -> List[str]:
         """Retrieve relevant passages for a query.

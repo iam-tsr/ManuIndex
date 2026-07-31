@@ -13,7 +13,7 @@ hierarchical_rag = HierarchicalRAG(
     embeddings=embeddings,
     top_k=config.top_k,
     parent_chunk_size=512,
-    child_window_sentences=1,
+    child_window_sentences=2,
     child_stride_sentences=1,
 )
 

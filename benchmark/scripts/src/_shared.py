@@ -1,6 +1,5 @@
 import math
 import re
-from collections.abc import Iterable
 
 from langchain_core.documents import Document
 from langchain_text_splitters import RecursiveCharacterTextSplitter
@@ -30,21 +29,6 @@ def split_documents(
         )
     return documents
 
-
-def dedupe_texts(texts: Iterable[str]) -> list[str]:
-    seen: set[str] = set()
-    unique: list[str] = []
-    for text in texts:
-        if text in seen:
-            continue
-        seen.add(text)
-        unique.append(text)
-    return unique
-
-
-def select_top_k(texts: Iterable[str], top_k: int) -> list[str]:
-    """Dedupe and keep the first ``top_k`` passages as separate contexts."""
-    return dedupe_texts(texts)[:top_k]
 
 
 def l2_normalize(vector: list[float]) -> list[float]:

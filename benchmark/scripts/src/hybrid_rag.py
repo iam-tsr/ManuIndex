@@ -2,7 +2,7 @@ from langchain_classic.retrievers import EnsembleRetriever
 from langchain_community.retrievers import BM25Retriever
 from langchain_community.vectorstores import FAISS
 
-from ._shared import select_top_k, split_documents
+from ._shared import split_documents
 
 
 class HybridRAG:
@@ -37,4 +37,4 @@ class HybridRAG:
         texts = [doc.page_content for doc in retrieved]
         texts = texts[: max(self.top_k * 2, self.top_k)]
 
-        return select_top_k(texts, self.top_k)
+        return texts[: self.top_k]

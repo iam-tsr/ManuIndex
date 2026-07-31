@@ -27,15 +27,15 @@ load_dotenv()
 BENCHMARK_DIR = Path(__file__).resolve().parents[1]
 PROJECT_ROOT = BENCHMARK_DIR.parent
 
-HF_DATASET_ID = "iam-tsr/ragmix" # "iam-tsr/ragmix"  # "neural-bridge/rag-dataset-12000"
+HF_DATASET_ID = "neural-bridge/rag-dataset-12000" # "iam-tsr/ragmix"  # "neural-bridge/rag-dataset-12000"
 HF_DATASET_SPLIT = "test"
 
-EMB_MODEL = "onnx_models/bge_m3/onnx/model.onnx"
-EMD_TOKENIZER = "onnx_models/bge_m3"
+EMB_MODEL = "onnx_models/qwen3_embed_0.6b/onnx/model.onnx"
+EMD_TOKENIZER = "onnx_models/qwen3_embed_0.6b"
 MAX_LENGTH = 1024
-EMBEDDING_MODEL_LABEL = "BGE-M3 (ONNX)" # BGE-M3 (ONNX) # Qwen3-Embedding 0.6B (ONNX)
-BENCHMARK_LLM_LABEL = "Gemma-4-E2B" # "Gemma-4-E2B" # "Qwen3.5-2B"
-DEFAULT_TOP_K = 5
+EMBEDDING_MODEL_LABEL = "Qwen3-Embedding 0.6B (ONNX)" # BERT (ONNX) # Qwen3-Embedding 0.6B (ONNX)
+BENCHMARK_LLM_LABEL = "Qwen2.5-3B"
+DEFAULT_TOP_K = 3
 
 client = OpenAI(
     api_key=os.getenv("OPENAI_API_KEY"),
@@ -71,7 +71,7 @@ def generate_answer(query: str, contexts: list[str]) -> tuple[str, int, int, int
             {"role": "user", "content": f"Context:\n{context_block}\n\nQuestion: {query}"},
         ],
         temperature=0,
-        max_tokens=2048,
+        max_tokens=1024,
     )
     content = response.choices[0].message.content
     if content is None:
@@ -105,7 +105,7 @@ def load_evaluation_cases(
     if dataset_id != HF_DATASET_ID:
         raise ValueError(f"Only {HF_DATASET_ID!r} is supported (got {dataset_id!r})")
 
-    ds = _load_dataset(split=split).select(range(2)) # Limit to first 100 cases for benchmarking
+    ds = _load_dataset(split=split).select(range(100)) # Limit to first 100 cases for benchmarking
 
     cases: list[dict] = []
 
@@ -408,7 +408,6 @@ def display_report(
     report_title: str,
     ragas_scores: dict,
     summary: dict,
-    elapsed: float,
     hf_scores: dict | None = None,
 ):
     sep = "─" * 52
@@ -435,7 +434,6 @@ def display_report(
     print(f"  {'Avg output tokens':<28} {cost['average_output_tokens']:.2f}")
     print(f"  {'Avg additional tokens':<28} {cost['average_additional_tokens']:.2f}")
     print(f"  {'Avg total tokens':<28} {cost['average_total_tokens']:.2f}")
-    print(f"\n  Total time: {elapsed:.1f}s")
     print(f"{'═' * 52}\n")
 
 
@@ -472,7 +470,6 @@ def run_family_benchmark(
     retriever,
 ) -> None:
     cases = load_evaluation_cases()
-    start_time = time.time()
 
     print(f"\n[1/3] Running {run_label} queries …")
     results = collect_results(cases, retriever)
@@ -484,8 +481,7 @@ def run_family_benchmark(
     print("\n[3/3] HuggingFace evaluation …")
     hf_scores = run_hf_evaluate(results)
 
-    elapsed = time.time() - start_time
-    display_report(report_title, ragas_scores, summary, elapsed, hf_scores=hf_scores)
+    display_report(report_title, ragas_scores, summary, hf_scores=hf_scores)
     save_report(
         BENCHMARK_DIR / "reports" / report_filename,
         config,

@@ -2,7 +2,7 @@ import json
 
 from langchain_community.vectorstores import FAISS
 
-from ._shared import select_top_k, split_documents, tokenize_keywords
+from ._shared import split_documents, tokenize_keywords
 
 
 class QueryRewriteRAG:
@@ -132,4 +132,4 @@ class QueryRewriteRAG:
             docs = vector_store.similarity_search(query, k=max(self.top_k, 2))
             texts.extend(doc.page_content for doc in docs)
 
-        return select_top_k(texts, self.top_k)
+        return texts[: self.top_k]

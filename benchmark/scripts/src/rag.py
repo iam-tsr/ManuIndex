@@ -1,6 +1,6 @@
 from langchain_community.vectorstores import FAISS
 
-from ._shared import select_top_k, split_documents
+from ._shared import split_documents
 
 
 class NaiveRAG:
@@ -27,4 +27,4 @@ class NaiveRAG:
         chunks = self.get_chunks(document)
         vector_store = self.get_vector_store(chunks)
         docs = self.get_relevant_context(vector_store, user_question)
-        return select_top_k((doc.page_content for doc in docs), self.top_k)
+        return [doc.page_content for doc in docs][: self.top_k]

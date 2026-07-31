@@ -3,7 +3,7 @@ import re
 from langchain_community.vectorstores import FAISS
 from langchain_core.documents import Document
 
-from ._shared import select_top_k, split_documents
+from ._shared import split_documents
 
 
 _SENTENCE_SPLIT_RE = re.compile(r"(?<=[.!?])\s+|\n+")
@@ -68,7 +68,7 @@ class HierarchicalRAG:
 
         children = self.get_children(parents)
         if not children:
-            return select_top_k((parent.page_content for parent in parents), self.top_k)
+            return [parent.page_content for parent in parents][: self.top_k]
 
         candidate_k = max(self.top_k * 3, self.top_k)
         child_store = FAISS.from_documents(children, embedding=self.embeddings)
@@ -99,4 +99,4 @@ class HierarchicalRAG:
             for index in ranked_indexes
             if 0 <= index < len(parents)
         ]
-        return select_top_k(parent_texts, self.top_k)
+        return parent_texts[: self.top_k]

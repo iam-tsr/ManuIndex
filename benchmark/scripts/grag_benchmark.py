@@ -9,6 +9,8 @@ Metrics:
 import tempfile
 import time
 
+from openai import OpenAI
+
 from manu_index import ManuIndex
 
 from ._common import (
@@ -27,6 +29,8 @@ from ._common import (
     summarize_results,
 )
 
+CHUNK_SIZE = 150
+
 def ingest_documents(cases: list[dict], persist_dir: str) -> ManuIndex:
     db = ManuIndex(
         embeddings=embeddings,
@@ -39,7 +43,7 @@ def ingest_documents(cases: list[dict], persist_dir: str) -> ManuIndex:
         doc_key = str(case["file"])
         if doc_key not in files_added:
             print(f"  Ingesting {doc_key} …")
-            db.add_document(case_document_text(case), chunk_size=150)
+            db.add_document(case_document_text(case), chunk_size=CHUNK_SIZE)
             files_added.add(doc_key)
     return db
 
@@ -49,7 +53,7 @@ def collect_results(db: ManuIndex, cases: list[dict]) -> list[dict]:
     for case in cases:
         for q in case["questions"]:
             retrieval_start = time.perf_counter()
-            contexts = db.search(query=q["question"], top_k=config.top_k, lambda_mult=0.9, alpha=0.5)
+            contexts = db.search(query=q["question"], top_k=config.top_k, lambda_mult=0.8, alpha=0.5)
             retrieval_time = time.perf_counter() - retrieval_start
 
             answer_start = time.perf_counter()
@@ -74,29 +78,31 @@ def collect_results(db: ManuIndex, cases: list[dict]) -> list[dict]:
 def main():
     cases = load_evaluation_cases()
 
-    with tempfile.TemporaryDirectory(prefix="manu_eval_") as persist_dir:
-        t0 = time.time()
+    # with tempfile.TemporaryDirectory(prefix="manu_eval_") as persist_dir:
 
-        print("\n[1/4] Ingesting documents …")
-        db = ingest_documents(cases, persist_dir)
+    # print("\n[1/4] Ingesting documents …")
+    # db = ingest_documents(cases, "manu_index_db")
 
-        print("\n[2/4] Running queries …")
-        results = collect_results(db, cases)
-        summary = summarize_results(results)
+    print("\n[2/4] Running queries …")
+    db = ManuIndex(
+        embeddings=embeddings,
+        client=client,
+        model_name=require_llm_model(),
+        persist_directory="manu_index_db",
+    )
+    results = collect_results(db, cases)
+    summary = summarize_results(results)
 
-        print("\n[3/4] RAGAS evaluation …")
-        ragas_scores = run_ragas(results)
+    print("\n[3/4] RAGAS evaluation …")
+    ragas_scores = run_ragas(results)
 
-        print("\n[4/4] HuggingFace evaluation …")
-        hf_scores = run_hf_evaluate(results)
-
-        elapsed = time.time() - t0
+    print("\n[4/4] HuggingFace evaluation …")
+    hf_scores = run_hf_evaluate(results)
 
     display_report(
         "ManuIndex Benchmark Report",
         ragas_scores,
         summary,
-        elapsed,
         hf_scores=hf_scores,
     )
     save_report(
