@@ -2,7 +2,7 @@
 
 This directory contains the **end-to-end evaluation suite** for [ManuIndex / GRAG](../README.md) against a family of standard RAG pipelines.
 
-The goal is not only to measure answer quality, but to show the **quality–latency–cost trade-off**: whether document-aware routing (GRAG) improves retrieval F1 and faithfulness without becoming the most expensive system.
+The goal is not only to measure answer quality, but to show the **quality-latency-cost trade-off**: whether document-aware routing (GRAG) improves retrieval quality and faithfulness without becoming the most expensive system.
 
 ---
 
@@ -11,16 +11,13 @@ The goal is not only to measure answer quality, but to show the **quality–late
 - [What We Measure](#what-we-measure)
 - [Evaluation Setup](#evaluation-setup)
 - [Methods Compared](#methods-compared)
-- [Directory Layout](#directory-layout)
 - [Results Overview](#results-overview)
   - [Neural Bridge (`rag-dataset-12000`)](#1-neural-bridge-rag-dataset-12000)
   - [RAGMix (`iam-tsr/ragmix`)](#2-ragmix-iam-tsrragmix)
 - [How to Read the Plots](#how-to-read-the-plots)
-- [Running the Benchmark](#running-the-benchmark)
-- [Generating Plots](#generating-plots)
-- [Report Format](#report-format)
 - [Metrics Definitions](#metrics-definitions)
 - [Reproducibility Notes](#reproducibility-notes)
+- [Takeaways](#takeaways)
 
 ---
 
@@ -30,7 +27,7 @@ Each method is run on the same evaluation cases with the same embedding model an
 
 | Axis | What it captures |
 | --- | --- |
-| **Quality (RAGAS)** | Faithfulness, answer relevancy, context precision/recall, answer correctness, and derived **F1** |
+| **Quality (RAGAS + answer overlap)** | Faithfulness, context precision/recall, context F1, answer recall, answer F1 |
 | **Runtime** | Average retrieval time and average answer-generation time per question |
 | **Cost** | Average input / output / total tokens per question (including auxiliary LLM calls such as query rewrite) |
 
@@ -45,38 +42,22 @@ Plots then put these axes together:
 
 ### Datasets
 
-Two public Hugging Face evaluation sets are used. Each run loads the `test` split and evaluates the **first 100 cases** (one question per document/context).
+Two public Hugging Face evaluation sets are used.
 
 | Aggregate report | Hugging Face dataset | Notes |
 | --- | --- | --- |
 | `neural_bridge_report.json` | [`neural-bridge/rag-dataset-12000`](https://huggingface.co/datasets/neural-bridge/rag-dataset-12000) | Classic single-document RAG QA pairs |
 | `ragmix_report.json` | [`iam-tsr/ragmix`](https://huggingface.co/datasets/iam-tsr/ragmix) | More heterogeneous mix; generally harder for flat baselines |
 
-Source documents are taken from the dataset row (`document` or `context`). Ground-truth answers come from the `answer` field.
-
 ### Fixed protocol
 
 | Setting | Value |
 | --- | --- |
-| Cases per run | 100 (first rows of `test`) |
-| `top_k` | 5 |
-| `chunk_size` | 100 (with method-specific overlap / hierarchy where applicable) |
-| Answer generation | OpenAI-compatible chat completion, `temperature=0`, `max_tokens=2048` |
+| `top_k` | 3 |
+| Chunking | Method-specific (`150` for flat baselines, `512` parent chunks for hierarchical, `4012` for LongRAG) |
+| Answer generation / evaluation LLM | Qwen2.5-3B, `temperature=0`, `max_tokens=1024` |
 | System prompt | Answer **only** from retrieved context; refuse if context is insufficient |
-| Evaluation library | [RAGAS](https://github.com/explodinggradients/ragas) |
-
-### Model matrix
-
-Every method is evaluated on a **2 × 2** grid of embedding model × answer LLM:
-
-| Embedding (ONNX) | Answer LLM |
-| --- | --- |
-| **BGE-M3** | **Gemma-4-E2B** |
-| **BGE-M3** | **Qwen3.5-2B** |
-| **Qwen3-Embedding 0.6B** | **Gemma-4-E2B** |
-| **Qwen3-Embedding 0.6B** | **Qwen3.5-2B** |
-
-Embeddings run locally via ONNX Runtime (typically GPU). The answer LLM is reached through `OPENAI_API_KEY` / `OPENAI_BASE_URL` / `OPENAI_MODEL_NAME`.
+| Evaluation libraries | [RAGAS](https://github.com/explodinggradients/ragas) for faithfulness/context metrics + HuggingFace evaluate for answer overlap |
 
 ---
 
@@ -87,73 +68,51 @@ Embeddings run locally via ONNX Runtime (typically GPU). The answer LLM is reach
 | **GRAG (ManuIndex)** | Document-aware index: summary routing, per-document hybrid retrieval, neighbor expansion |
 | **Naive RAG** | Flat chunking + dense FAISS similarity search |
 | **Flat Hybrid RAG** | Dense (MMR) + BM25 ensemble over a single flat index |
-| **Hierarchical RAG** | Retrieve sections first, then chunks inside selected sections |
-| **Parent–Child RAG** | Match fine-grained children, return parent spans for context |
+| **Hierarchical RAG** | Retrieve sections first, then parent spans/chunks inside selected sections |
+| **LongRAG** | Retrieve and return longer spans to preserve more context |
 | **Query Rewrite RAG** | LLM rewrites the query, then dense retrieval (extra tokens + latency) |
 
-Baseline implementations live in `scripts/src/`. GRAG uses the library entrypoint `manu_index.ManuIndex` (ingested into a temporary persist directory per run).
+Baseline implementations live in `scripts/src/`. GRAG uses the library entrypoint `manu_index.ManuIndex`.
 
 ---
 
 ## Results Overview
 
-Numbers below are taken from the checked-in aggregate reports. **F1** is the harmonic mean of context precision and context recall. **E2E** is average retrieval time + average answer time (seconds per question). **Toks** is average total tokens per question.
+Numbers below come from the checked-in aggregate reports. RAGAS is the primary evaluation library: it provides Faithfulness, Context Precision, and Context Recall. We compute `Context F1` as the harmonic mean of RAGAS `Context Precision` and `Context Recall`. `Answer Recall` and `Answer F1` come from HuggingFace evaluate on the generated answer versus the ground-truth answer.
+
+The per-dataset tables below use the same column set.
 
 ### 1. Neural Bridge (`rag-dataset-12000`)
 
-On this set GRAG is consistently the **highest-F1** method across all four embedding × LLM panels, while remaining competitive on latency.
+#### BERT (ONNX)
 
-#### BGE-M3 + Gemma-4-E2B
+| Method | Faithfulness | Answer Recall (AR) | Answer F1 | Context F1 | Avg runtime (s) | Total tokens |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| GRAG | **0.7755** | 0.4429 | 0.3462 | 0.5938 | **1.757** | **531.5** |
+| Hierarchical | 0.7744 | **0.5961** | 0.3431 | **0.6900** | 2.062 | 795.2 |
+| LongRAG | 0.7716 | 0.5937 | **0.3622** | 0.6427 | 1.804 | 3114.8 |
+| Flat Hybrid | 0.7144 | 0.5339 | 0.2676 | 0.5934 | 2.460 | 599.2 |
+| Query Rewrite | 0.7302 | 0.5272 | 0.2584 | 0.5663 | 3.481 | 860.9 |
+| Naive | 0.7302 | 0.5272 | 0.2584 | 0.5663 | 2.383 | 584.9 |
 
-| Method | F1 | Faithfulness | Context Recall | Context Precision | Answer Correctness | E2E (s) | Tokens |
-| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| **GRAG** | **0.6906** | **0.9417** | 0.8131 | **0.6003** | 0.6983 | 0.554 | 376.6 |
-| Parent–Child | 0.6108 | 0.9272 | **0.8297** | 0.4832 | **0.6991** | **0.399** | 261.0 |
-| Flat Hybrid | 0.4995 | 0.9100 | 0.6779 | 0.3955 | 0.6151 | 0.352 | 211.1 |
-| Naive | 0.4806 | 0.9372 | 0.6785 | 0.3721 | 0.6267 | 0.353 | 210.3 |
-| Query Rewrite | 0.4806 | 0.9372 | 0.6785 | 0.3721 | 0.6267 | 0.778 | 331.8 |
-| Hierarchical | 0.4558 | 0.9047 | 0.6896 | 0.3404 | 0.6110 | 0.457 | **204.9** |
+#### Qwen3-Embedding 0.6B (ONNX)
 
-#### BGE-M3 + Qwen3.5-2B
-
-| Method | F1 | Faithfulness | Context Recall | E2E (s) | Tokens |
-| --- | ---: | ---: | ---: | ---: | ---: |
-| **GRAG** | **0.8103** | **0.8918** | **0.8466** | 0.544 | 390.8 |
-| Flat Hybrid | 0.6796 | 0.7942 | 0.7569 | **0.357** | 217.7 |
-| Naive | 0.6765 | 0.8315 | 0.7835 | 0.453 | 237.2 |
-| Query Rewrite | 0.6765 | 0.8315 | 0.7835 | 0.852 | 370.1 |
-| Parent–Child | 0.6701 | 0.7663 | 0.7714 | 0.384 | 250.2 |
-| Hierarchical | 0.6488 | 0.8283 | 0.7875 | 0.459 | **214.2** |
-
-#### Qwen3-Embedding 0.6B + Gemma-4-E2B
-
-| Method | F1 | Faithfulness | Context Recall | E2E (s) | Tokens |
-| --- | ---: | ---: | ---: | ---: | ---: |
-| **GRAG** | **0.6989** | 0.8986 | **0.7910** | 0.719 | 374.6 |
-| Naive | 0.5646 | 0.9383 | 0.6988 | 0.469 | 210.5 |
-| Query Rewrite | 0.5613 | 0.9383 | 0.6888 | 0.948 | 332.0 |
-| Parent–Child | 0.5581 | 0.8840 | 0.6745 | **0.460** | 231.3 |
-| Flat Hybrid | 0.5406 | 0.8614 | 0.6712 | 0.498 | 209.2 |
-| Hierarchical | 0.5315 | **0.9400** | 0.6398 | 0.916 | **208.4** |
-
-#### Qwen3-Embedding 0.6B + Qwen3.5-2B
-
-| Method | F1 | Faithfulness | Context Recall | E2E (s) | Tokens |
-| --- | ---: | ---: | ---: | ---: | ---: |
-| **GRAG** | **0.7969** | **0.8655** | **0.8407** | 0.729 | 386.9 |
-| Naive | 0.6845 | 0.8038 | 0.7749 | 0.476 | 222.1 |
-| Query Rewrite | 0.6845 | 0.8038 | 0.7749 | 0.882 | 356.1 |
-| Flat Hybrid | 0.6845 | 0.7778 | 0.7651 | 0.574 | 239.1 |
-| Hierarchical | 0.6824 | 0.8099 | 0.7909 | 0.665 | **217.5** |
-| Parent–Child | 0.6810 | 0.7440 | 0.7494 | **0.442** | 251.2 |
+| Method | Faithfulness | Answer Recall (AR) | Answer F1 | Context F1 | Avg runtime (s) | Total tokens |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| GRAG | **0.9257** | **0.6901** | 0.3786 | 0.8074 | 2.472 | 645.4 |
+| Hierarchical | 0.8893 | 0.6650 | 0.3840 | **0.8366** | 2.049 | 918.3 |
+| LongRAG | 0.8437 | 0.6449 | **0.3850** | 0.8256 | **1.979** | 2979.6 |
+| Naive | 0.7761 | 0.5886 | 0.3125 | 0.7189 | 2.339 | **582.6** |
+| Query Rewrite | 0.7761 | 0.5886 | 0.3125 | 0.7189 | 3.454 | 858.6 |
+| Flat Hybrid | 0.7448 | 0.5981 | 0.2979 | 0.7073 | 2.596 | 629.0 |
 
 #### Neural Bridge plots
 
-**Time vs F1** — GRAG (orange star) sits at the top of each panel; dashed lines mark GRAG’s reference F1 and latency.
+**Time vs F1** - higher Context F1 and farther left is better.
 
 ![Neural Bridge: Time vs F1](plots/neural_bridge/time_vs_f1.png)
 
-**Tokens vs Faithfulness** — higher faithfulness at moderate token cost; query-rewrite pays extra tokens without matching GRAG quality.
+**Tokens vs Faithfulness** - higher faithfulness at moderate token cost is better.
 
 ![Neural Bridge: Tokens vs Faithfulness](plots/neural_bridge/tokens_vs_faithfulness.png)
 
@@ -161,59 +120,35 @@ On this set GRAG is consistently the **highest-F1** method across all four embed
 
 ### 2. RAGMix (`iam-tsr/ragmix`)
 
-RAGMix is a harder, more heterogeneous mix. Absolute F1 is lower for every method, but **relative ranking is stable**: GRAG leads on F1 in every panel, and often wins on end-to-end latency as well (baselines rebuild flat indexes per query/document in this harness).
+#### BERT (ONNX)
 
-#### BGE-M3 + Gemma-4-E2B
+| Method | Faithfulness | Answer Recall (AR) | Answer F1 | Context F1 | Avg runtime (s) | Total tokens |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| GRAG | **0.5257** | 0.2822 | 0.2294 | 0.3018 | 2.568 | 476.6 |
+| LongRAG | 0.5252 | **0.3786** | 0.2979 | 0.3609 | **2.300** | 3143.5 |
+| Hierarchical | 0.4964 | 0.3767 | **0.2992** | **0.3722** | 3.251 | 979.6 |
+| Flat Hybrid | 0.3747 | 0.2753 | 0.2106 | 0.3061 | 2.758 | 347.3 |
+| Query Rewrite | 0.3612 | 0.2559 | 0.2300 | 0.2641 | 4.021 | 615.0 |
+| Naive | 0.3612 | 0.2559 | 0.2300 | 0.2641 | 2.659 | **297.0** |
 
-| Method | F1 | Faithfulness | Context Recall | E2E (s) | Tokens |
-| --- | ---: | ---: | ---: | ---: | ---: |
-| **GRAG** | **0.4777** | **0.9278** | **0.6805** | **0.785** | 447.1 |
-| Flat Hybrid | 0.3587 | 0.8511 | 0.5888 | 1.169 | 259.5 |
-| Parent–Child | 0.3089 | 0.8130 | 0.4923 | 1.064 | 269.5 |
-| Naive | 0.2945 | 0.8135 | 0.5227 | 1.171 | 260.1 |
-| Query Rewrite | 0.2945 | 0.8067 | 0.5227 | 1.641 | 411.2 |
-| Hierarchical | 0.2855 | 0.7642 | 0.4363 | 1.408 | **253.1** |
+#### Qwen3-Embedding 0.6B (ONNX)
 
-#### BGE-M3 + Qwen3.5-2B
-
-| Method | F1 | Faithfulness | Context Recall | E2E (s) | Tokens |
-| --- | ---: | ---: | ---: | ---: | ---: |
-| **GRAG** | **0.6018** | **0.6698** | **0.6658** | **0.814** | 480.0 |
-| Parent–Child | 0.5102 | 0.5272 | 0.5733 | 0.959 | 281.0 |
-| Flat Hybrid | 0.5003 | 0.4972 | 0.6174 | 1.152 | 268.1 |
-| Naive | 0.4901 | 0.4451 | 0.5608 | 1.123 | 265.9 |
-| Query Rewrite | 0.4901 | 0.4451 | 0.5608 | 1.569 | 431.7 |
-| Hierarchical | 0.4763 | 0.4852 | 0.5742 | 1.319 | **261.7** |
-
-#### Qwen3-Embedding 0.6B + Gemma-4-E2B
-
-| Method | F1 | Faithfulness | Context Recall | E2E (s) | Tokens |
-| --- | ---: | ---: | ---: | ---: | ---: |
-| **GRAG** | **0.4563** | **0.9165** | **0.6665** | **0.988** | 439.5 |
-| Flat Hybrid | 0.3458 | 0.8865 | 0.5245 | 1.922 | 261.2 |
-| Parent–Child | 0.3216 | 0.7988 | 0.4967 | 1.623 | 276.9 |
-| Naive | 0.3055 | 0.7928 | 0.5285 | 1.885 | 256.6 |
-| Query Rewrite | 0.3055 | 0.8028 | 0.5285 | 2.397 | 407.9 |
-| Hierarchical | 0.3042 | 0.8300 | 0.4800 | 2.146 | **253.4** |
-
-#### Qwen3-Embedding 0.6B + Qwen3.5-2B
-
-| Method | F1 | Faithfulness | Context Recall | E2E (s) | Tokens |
-| --- | ---: | ---: | ---: | ---: | ---: |
-| **GRAG** | **0.6128** | **0.6477** | **0.7004** | **0.928** | 451.1 |
-| Flat Hybrid | 0.5230 | 0.4755 | 0.6002 | 1.808 | 264.4 |
-| Parent–Child | 0.4939 | 0.4679 | 0.5438 | 1.772 | 317.6 |
-| Naive | 0.4689 | 0.4885 | 0.5525 | 1.915 | 285.6 |
-| Query Rewrite | 0.4689 | 0.4885 | 0.5525 | 2.371 | 451.4 |
-| Hierarchical | 0.4445 | 0.4465 | 0.5148 | 2.118 | **265.0** |
+| Method | Faithfulness | Answer Recall (AR) | Answer F1 | Context F1 | Avg runtime (s) | Total tokens |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| GRAG | **0.7058** | 0.5097 | **0.4034** | 0.5440 | **2.035** | 562.8 |
+| LongRAG | 0.6272 | **0.5112** | 0.3685 | **0.5792** | 2.606 | 3040.8 |
+| Hierarchical | 0.5876 | 0.4304 | 0.3512 | 0.5004 | 2.654 | 972.0 |
+| Flat Hybrid | 0.4831 | 0.3691 | 0.2846 | 0.4366 | 2.456 | **395.5** |
+| Naive | 0.3864 | 0.3649 | 0.2812 | 0.4114 | 2.414 | 398.7 |
+| Query Rewrite | 0.3864 | 0.3649 | 0.2812 | 0.4114 | 3.646 | 716.8 |
 
 #### RAGMix plots
 
-**Time vs F1** — GRAG dominates the upper-left region on every emb × LLM panel.
+**Time vs F1** - higher Context F1 and farther left is better.
 
 ![RAGMix: Time vs F1](plots/ragmix/time_vs_f1.png)
 
-**Tokens vs Faithfulness** — GRAG preserves high faithfulness (especially with Gemma) while query rewrite spends similar tokens for weaker groundedness.
+**Tokens vs Faithfulness** - GRAG keeps the best faithfulness on the Qwen panel.
 
 ![RAGMix: Tokens vs Faithfulness](plots/ragmix/tokens_vs_faithfulness.png)
 
@@ -225,30 +160,30 @@ RAGMix is a harder, more heterogeneous mix. Absolute F1 is lower for every metho
 | --- | --- |
 | **Context Precision** | Fraction of retrieved contexts that are relevant to the question / reference |
 | **Context Recall** | How completely the retrieved contexts cover the reference answer |
-| **F1** | $(2 \cdot P \cdot R / (P + R))$ over context precision and context recall |
+| **Context F1** | Harmonic mean of context precision and recall |
 | **Faithfulness** | Whether the generated answer is supported by the retrieved contexts |
-| **Answer Relevancy** | Whether the answer addresses the user question |
-| **Answer Correctness** | Semantic agreement with the ground-truth answer |
-| **E2E time** | `avg_retrieval_time + avg_answer_time` (seconds / question) |
+| **Answer Recall** | Token-level recall against the ground-truth answer |
+| **Answer F1** | Token-level F1 against the ground-truth answer |
+| **E2E time** | `avg retrieval time + avg answer time` (seconds / question) |
 | **Total tokens** | Prompt + completion tokens for answering, plus auxiliary calls (e.g. rewrites) |
 
-RAGAS evaluation uses the same OpenAI-compatible LLM and the same ONNX embedder as the run (via LangChain wrappers).
+RAGAS evaluation uses the same Qwen2.5-3B LLM for all methods, with the same system prompt and temperature.
 
 ---
 
 ## Reproducibility Notes
 
-- **Same cases for all methods** within a dataset configuration (first 100 `test` rows).
+- **Same cases for all methods** within a dataset configuration.
 - **Temperature 0** for answer generation to reduce variance.
+- **`top_k=3`** in the checked-in reports.
 - Baselines build retrieval indexes **per document/query** inside the harness; GRAG ingests all evaluation documents once into a temporary ManuIndex. Compare quality metrics and token cost directly; interpret absolute retrieval latency with that indexing difference in mind.
-- Query-rewrite token usage includes rewrite calls (see `average_additional_tokens` / elevated output tokens).
 
 ---
 
 ## Takeaways
 
-1. **GRAG leads on F1** on both Neural Bridge and RAGMix for every embedding × LLM pair in the checked-in results.
-2. On **Neural Bridge**, simpler methods can be slightly faster or cheaper per question, but they lag on context precision/F1; Parent–Child is the strongest non-GRAG baseline on Gemma + BGE.
-3. On **RAGMix**, GRAG often improves **both** F1 and end-to-end time relative to flat rebuild baselines, while keeping faithfulness high (especially with Gemma).
-4. **Query rewrite** increases tokens and latency without closing the F1 gap to GRAG.
-5. Use the **Time vs F1** and **Tokens vs Faithfulness** plots above for a compact multi-axis comparison when presenting results.
+1. GRAG's main edge in the checked-in runs is **faithfulness**, especially on the Qwen panels, but it does not win every Context F1 panel.
+2. **Hierarchical** is the strongest BERT-side Context F1 baseline, while **LongRAG** is the main Qwen-side Context F1 competitor.
+3. **Query rewrite** is the most expensive baseline once rewrite tokens are counted, and it does not close the quality gap.
+4. **LongRAG** can be fast on retrieval, but its long contexts drive token cost sharply higher.
+5. Use the **Time vs F1** and **Tokens vs Faithfulness** plots for a compact multi-axis comparison.

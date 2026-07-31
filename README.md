@@ -48,34 +48,20 @@ flowchart TD
 
 ## Benchmark Snapshot
 
-The suite compares **6 retrieval pipelines** (GRAG + 5 standard RAG variants) on **2 Hugging Face datasets**, **100 questions each**, with fixed `top_k=5` and a **2×2** matrix of ONNX embeddings × answer LLMs (BGE-M3 / Qwen3-Embedding 0.6B × Gemma-4-E2B / Qwen3.5-2B). Full tables, plots, and methodology live in [`benchmark/README.md`](benchmark/README.md).
+The suite compares **6 retrieval pipelines** (GRAG + 5 standard RAG variants) on **2 datasets**, with fixed `top_k=3` and a **Qwen2.5-3B** answer/evaluation LLM. **RAGAS** is used for faithfulness, context precision/recall, and derived context F1; HuggingFace evaluate supplies answer recall and answer F1. Full tables, plots, and methodology live in [`benchmark/README.md`](benchmark/README.md).
 
-Averages below are over all **8** embedding × LLM panels (**4** per dataset).
+Averages below are over the **4** checked-in panels (**2** datasets × **2** embedding backends).
 
 ### Across both datasets
 
-| Method | Avg F1 | Avg Context Recall | Avg Faithfulness | Avg E2E Time | Avg Tokens |
-| --- | ---: | ---: | ---: | ---: | ---: |
-| **GRAG** | **0.6432** | **0.7506** | **0.8449** | **0.757s** | 418 |
-| Parent–Child RAG | 0.5193 | 0.6414 | 0.7411 | 0.888s | 267 |
-| Flat Hybrid RAG | 0.5165 | 0.6502 | 0.7567 | 0.979s | 241 |
-| Naive RAG | 0.4957 | 0.6375 | 0.7563 | 0.980s | 244 |
-| Query Rewrite RAG | 0.4952 | 0.6363 | 0.7567 | 1.430s | 387 |
-| Hierarchical RAG | 0.4786 | 0.6141 | 0.7511 | 1.186s | **235** |
-
-### By dataset (GRAG vs best baseline)
-
-| Dataset | GRAG F1 | Best baseline F1 | GRAG Context Recall | GRAG E2E |
+| Method | Avg Context F1 | Avg Faithfulness | Avg E2E Time | Avg Tokens |
 | --- | ---: | ---: | ---: | ---: |
-| [Neural Bridge](https://huggingface.co/datasets/neural-bridge/rag-dataset-12000) | **0.7492** | 0.6300 (Parent–Child) | **0.8228** | **0.636s** |
-| [RAGMix](https://huggingface.co/datasets/iam-tsr/ragmix) | **0.5371** | 0.4320 (Flat Hybrid) | **0.6783** | **0.879s** |
-
-Interpretation:
-
-- **GRAG leads on F1 in every emb × LLM panel** on both datasets (8/8).
-- On average GRAG improves F1 by **~12–24 points** over the strongest non-GRAG baseline while also offering the **lowest mean end-to-end latency**.
-- Flat baselines use fewer tokens per answer, but **query rewrite spends almost as many tokens as GRAG** without matching quality.
-- RAGMix is harder overall; GRAG’s relative margin and latency advantage are larger there.
+| GRAG | 0.5617 | **0.7332** | **1.958s** | 554 |
+| LongRAG | **0.6021** | 0.6919 | 2.172s | 3070 |
+| Hierarchical RAG | 0.5998 | 0.6869 | 2.504s | 916 |
+| Flat Hybrid RAG | 0.5108 | 0.5792 | 2.568s | 493 |
+| Naive RAG | 0.4902 | 0.5635 | 2.449s | **466** |
+| Query Rewrite RAG | 0.4902 | 0.5635 | 3.651s | 763 |
 
 ## Installation
 
