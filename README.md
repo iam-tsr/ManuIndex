@@ -48,13 +48,13 @@ flowchart TD
 
 ## Benchmark Snapshot
 
-The suite compares **6 retrieval pipelines** (GRAG + 5 standard RAG variants) on **2 datasets**, with fixed `top_k=3` and a **Qwen2.5-3B** answer/evaluation LLM. **RAGAS** is used for faithfulness, context precision/recall, and derived context F1; HuggingFace evaluate supplies answer recall and answer F1. Full tables, plots, and methodology live in [`benchmark/README.md`](https://github.com/iam-tsr/ManuIndex/blob/main/benchmark/README.md).
+The suite compares **6 retrieval pipelines** (GRAG + 5 standard RAG variants) on **2 datasets**, with fixed `Ctx F1@3` and a **Qwen2.5-3B** answer/evaluation LLM. **RAGAS** is used for faithfulness, context precision/recall, and derived context F1; HuggingFace evaluate supplies answer recall and answer F1. Full tables, plots, and methodology live in [`benchmark/README.md`](https://github.com/iam-tsr/ManuIndex/blob/main/benchmark/README.md).
 
 Averages below are over the **4** checked-in panels (**2** datasets × **2** embedding backends).
 
 ### Across both datasets
 
-| Method | Avg Context F1 | Avg Faithfulness | Avg E2E Time | Avg Tokens |
+| Method | Avg Context F1@3 | Avg Faithfulness | Avg E2E Time | Avg Tokens |
 | --- | ---: | ---: | ---: | ---: |
 | GRAG | 0.5617 | **0.7332** | **1.958s** | 554 |
 | LongRAG | **0.6021** | 0.6919 | 2.172s | 3070 |
