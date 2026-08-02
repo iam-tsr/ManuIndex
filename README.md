@@ -2,7 +2,7 @@
 
 <div align="center">
 
-<p>Core implementation of **GRAG**: a document-aware retrieval pipeline built for heterogeneous RAG corpora.</p>
+<p>Core implementation of <b>GRAG</b>: a document-aware retrieval pipeline built for heterogeneous RAG corpora.</p>
 
 <br>
 
@@ -48,7 +48,7 @@ flowchart TD
 
 ## Benchmark Snapshot
 
-The suite compares **6 retrieval pipelines** (GRAG + 5 standard RAG variants) on **2 datasets**, with fixed `top_k=3` and a **Qwen2.5-3B** answer/evaluation LLM. **RAGAS** is used for faithfulness, context precision/recall, and derived context F1; HuggingFace evaluate supplies answer recall and answer F1. Full tables, plots, and methodology live in [`benchmark/README.md`](benchmark/README.md).
+The suite compares **6 retrieval pipelines** (GRAG + 5 standard RAG variants) on **2 datasets**, with fixed `top_k=3` and a **Qwen2.5-3B** answer/evaluation LLM. **RAGAS** is used for faithfulness, context precision/recall, and derived context F1; HuggingFace evaluate supplies answer recall and answer F1. Full tables, plots, and methodology live in [`benchmark/README.md`](https://github.com/iam-tsr/ManuIndex/blob/main/benchmark/README.md).
 
 Averages below are over the **4** checked-in panels (**2** datasets × **2** embedding backends).
 
