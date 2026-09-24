@@ -1,0 +1,18 @@
+*.swp
+*.swo
+*.o
+*.a
+*.dSYM
+*.so
+*.dylib
+*.pyc
+*~
+.env
+/build/
+/bin/
+.venv/
+__pycache__/
+
+# Python package build outputs
+/dist/
+/*.egg-info/
