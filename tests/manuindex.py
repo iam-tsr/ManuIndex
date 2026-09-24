@@ -2,7 +2,7 @@ import os
 
 from dotenv import load_dotenv
 
-from manuindex import ManuIndex, MongoDBHandler
+from manu_index import ManuIndex, MongoDBHandler
 from manu_embed import ONNXEmbedder
 
 load_dotenv()
