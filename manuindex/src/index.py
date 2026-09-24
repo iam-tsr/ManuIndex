@@ -13,7 +13,7 @@ from pymupdf4llm.helpers.image_analyzer import BaseImageAnalyzer
 from .summary import DocumentSummary
 from .datastore import MongoDBHandler
 from .retrieval import BM25Retriever, EnsembleRetriever, FaissRetriever, IndexedChunk, ScoredChunk
-from .embed import ONNXEmbedder
+from .embed import Embedder
 from .parser import image_analyzer as parse_pdf_document
 
 
@@ -29,7 +29,7 @@ class ManuIndex:
         api_key: str,
         model_name: str,
         base_url: str,
-        embeddings: ONNXEmbedder,
+        embeddings: Embedder,
         mongo_handler: MongoDBHandler,
         image_analyzer: BaseImageAnalyzer | None = None,
     ):
