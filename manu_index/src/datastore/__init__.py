@@ -1,3 +1,3 @@
-from .mongo import MongoDBHandler
+from .local import DataStore, LocalDataStore
 
-__all__ = ["MongoDBHandler"]
+__all__ = ["DataStore", "LocalDataStore"]

@@ -11,7 +11,7 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 from pymupdf4llm.helpers.image_analyzer import BaseImageAnalyzer
 
 from .summary import DocumentSummary
-from .datastore import MongoDBHandler
+from .datastore import DataStore
 from .retrieval import BM25Retriever, EnsembleRetriever, FaissRetriever, IndexedChunk, ScoredChunk
 from .embed import Embedder
 from .parser import image_analyzer as parse_pdf_document
@@ -30,7 +30,7 @@ class ManuIndex:
         model_name: str,
         base_url: str,
         embeddings: Embedder,
-        mongo_handler: MongoDBHandler,
+        datastore: DataStore,
         image_analyzer: BaseImageAnalyzer | None = None,
     ):
         """
@@ -39,14 +39,14 @@ class ManuIndex:
             embeddings: Embedding model used to encode summaries, chunks, and queries.
             model_name: Model name used for document summaries and PDF image analysis.
             base_url: API base URL used for OpenAI-compatible calls.
-            mongo_handler: Preconfigured MongoDB handler, useful for tests.
+            datastore: Local datastore used for routing metadata and document chunks.
             image_analyzer: Preconfigured image analyzer for PDF image analysis.
         """
         self.api_key = api_key
         self.embeddings = embeddings
         self.model_name = model_name
         self.base_url = base_url
-        self.mongo = mongo_handler
+        self.datastore = datastore
         self.image_analyzer = image_analyzer
 
     def add_document(
@@ -55,7 +55,7 @@ class ManuIndex:
         metadata: dict[str, Any] | None = None,
         chunk_size: int = 150,
     ) -> str:
-        """Ingest text, a PDF path, or PDF bytes into MongoDB.
+        """Ingest text, a PDF path, or PDF bytes into local storage.
 
         Returns:
             The generated document id.
@@ -69,12 +69,6 @@ class ManuIndex:
 
         summary = self._create_summary(document_text)
         summary_embedding = self.embeddings.embed_query(summary)
-        self.mongo.route_meta.insert_route_meta(
-            doc_id=doc_id,
-            summary=summary,
-            summary_vector=summary_embedding,
-            metadata=doc_metadata,
-        )
 
         chunks = self._deterministic_splitter(
             document=document_text,
@@ -82,20 +76,32 @@ class ManuIndex:
             chunk_size=chunk_size,
         )
         if not chunks:
+            self.datastore.add_document(
+                doc_id=doc_id,
+                summary=summary,
+                summary_vector=summary_embedding,
+                metadata=doc_metadata,
+                chunks=[],
+            )
             return doc_id
 
         vectors = self.embeddings.embed_documents([chunk.text for chunk in chunks])
-        records = []
-        for chunk, vector in zip(chunks, vectors):
-            chunk.vector = list(vector)
-            records.append({
+        records = [
+            {
                 "doc_id": chunk.doc_id,
                 "chunk_index": chunk.chunk_index,
-                "vector": chunk.vector,
+                "vector": list(vector),
                 "text": chunk.text,
-            })
-
-        self.mongo.document_index.insert_document_chunks(records)
+            }
+            for chunk, vector in zip(chunks, vectors)
+        ]
+        self.datastore.add_document(
+            doc_id=doc_id,
+            summary=summary,
+            summary_vector=summary_embedding,
+            metadata=doc_metadata,
+            chunks=records,
+        )
         return doc_id
 
     def search(
@@ -157,7 +163,7 @@ class ManuIndex:
 
     def info(self) -> list[dict[str, Any]]:
         """Return metadata for every indexed document."""
-        records = self.mongo.route_meta.get_route_meta()
+        records = self.datastore.get_route_meta()
         return [
             {
                 "doc_id": record["doc_id"],
@@ -168,14 +174,12 @@ class ManuIndex:
         ]
 
     def delete(self, doc_id: str) -> None:
-        """Remove a document from routeMeta and documentIndex."""
-        self.mongo.route_meta.delete_route_meta(doc_id)
-        self.mongo.document_index.delete_document_chunks(doc_id)
+        """Remove a document from local storage."""
+        self.datastore.delete_document(doc_id)
 
     def clear(self) -> None:
-        """Delete all indexed documents from MongoDB."""
-        self.mongo.route_meta.clear()
-        self.mongo.document_index.clear()
+        """Delete all indexed documents from local storage."""
+        self.datastore.clear()
 
     def _document_text(
         self,
@@ -233,7 +237,7 @@ class ManuIndex:
         ).summarize()
 
     def _find_collections(self, query_embedding: Sequence[float], top_c: int) -> list[str]:
-        records = self.mongo.route_meta.get_route_meta()
+        records = self.datastore.get_route_meta()
         records = [record for record in records if record.get("summary_vector")]
         if not records or top_c <= 0:
             return []
@@ -247,7 +251,7 @@ class ManuIndex:
         return [records[int(index)]["doc_id"] for index in top_indices]
 
     def _load_chunks(self, doc_ids: Sequence[str]) -> list[IndexedChunk]:
-        records = self.mongo.document_index.get_document_chunks(doc_ids)
+        records = self.datastore.get_document_chunks(doc_ids)
         chunks = []
         for record in records:
             chunks.append(IndexedChunk(
