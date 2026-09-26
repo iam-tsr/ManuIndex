@@ -12,7 +12,7 @@ from pymupdf4llm.helpers.image_analyzer import BaseImageAnalyzer
 
 from .summary import DocumentSummary
 from .datastore import DataStore
-from .retrieval import BM25Retriever, EnsembleRetriever, FaissRetriever, IndexedChunk, ScoredChunk
+from .retrieval import BM25Retriever, FaissRetriever, IndexedChunk, ScoredChunk
 from .embed import Embedder
 from .parser import image_analyzer as parse_pdf_document
 
@@ -123,13 +123,11 @@ class ManuIndex:
             return []
 
         candidate_k = max(top_k, DOC_TOP_K * max(1, len(doc_ids)))
-        candidates = self._hybrid_search(
+        candidates = self._dense_search(
             chunks=chunks,
-            query=query,
             query_embedding=query_embedding,
             top_k=candidate_k,
             lambda_mult=lambda_mult,
-            alpha=alpha,
         )
         expanded_chunks = self._neighbour_chunking(
             documents=candidates,
@@ -139,25 +137,10 @@ class ManuIndex:
         if len(rerank_chunks) <= top_k:
             return [chunk.text for chunk in rerank_chunks]
 
-        # The only cons in the whole process is that we have to re-embed the reranked chunks, which is a bit wasteful.
-        final_vectors = self.embeddings.embed_documents([chunk.text for chunk in rerank_chunks])
-        final_chunks = [
-            IndexedChunk(
-                doc_id=chunk.doc_id,
-                chunk_index=index,
-                text=chunk.text,
-                vector=list(vector),
-                metadata=chunk.metadata,
-            )
-            for index, (chunk, vector) in enumerate(zip(rerank_chunks, final_vectors))
-        ]
-        final_results = self._hybrid_search(
-            chunks=final_chunks,
+        final_results = self._sparse_search(
+            chunks=rerank_chunks,
             query=query,
-            query_embedding=query_embedding,
             top_k=top_k,
-            lambda_mult=lambda_mult,
-            alpha=alpha,
         )
         return [result.chunk.text for result in final_results]
 
@@ -262,26 +245,26 @@ class ManuIndex:
             ))
         return chunks
 
-    def _hybrid_search(
+    def _dense_search(
         self,
         chunks: list[IndexedChunk],
-        query: str,
         query_embedding: Sequence[float],
         top_k: int,
         lambda_mult: float,
-        alpha: float,
     ) -> list[ScoredChunk]:
-        dense_results = FaissRetriever(chunks).search(
+        return FaissRetriever(chunks).search(
             query_vector=query_embedding,
             top_k=top_k,
             lambda_mult=lambda_mult,
         )
-        sparse_results = BM25Retriever(chunks).search(query=query, top_k=top_k)
-        return EnsembleRetriever(alpha=alpha).combine(
-            dense_results=dense_results,
-            sparse_results=sparse_results,
-            top_k=top_k,
-        )
+
+    def _sparse_search(
+        self,
+        chunks: list[IndexedChunk],
+        query: str,
+        top_k: int,
+    ) -> list[ScoredChunk]:
+        return BM25Retriever(chunks).search(query=query, top_k=top_k)
 
     def _deterministic_splitter(
         self,
