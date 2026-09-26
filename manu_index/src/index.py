@@ -110,7 +110,6 @@ class ManuIndex:
         top_k: int = 5,
         top_c: int = 5,
         lambda_mult: float = 0.8,
-        alpha: float = 0.5,
     ) -> list[str]:
         """Retrieve relevant passages for a query."""
         if top_k <= 0:
@@ -185,9 +184,7 @@ class ManuIndex:
         return document
 
     def _parse_pdf(self, document: str | bytes) -> str:
-        # if self.image_analyzer:
         return parse_pdf_document(document, analyzer=self.image_analyzer)
-        # return parse_pdf_document(document)
 
     def _is_pdf_bytes(self, document: bytes) -> bool:
         return b"%PDF" in document[:1024]
