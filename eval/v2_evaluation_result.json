@@ -1,0 +1,187 @@
+{
+  "summary": {
+    "total_evaluation": 5,
+    "successful_evaluations": 5,
+    "total_execution_time": 0.16646528244018555,
+    "avg_time_per_query": 0.03329305648803711,
+    "average_time_per_query": 0.03329305648803711,
+    "deepeval_average_scores": {
+      "AnswerRelevancyMetric": 0.9333333333333332,
+      "FaithfulnessMetric": 0.6,
+      "ContextualPrecisionMetric": 1.0,
+      "ContextualRecallMetric": 0.9142857142857143
+    }
+  },
+  "results": [
+    {
+      "case": 1,
+      "question": "Based on Figure 1, what is the maximum improvement in generated token per second achieved by the Bud Inference Engine, and on which hardware platform is this figure measured?",
+      "retrieve_chunks": [
+        "This would also make Gen-AI based products and companies’ environment friendly, our estimates shows that CPU usage for Inference could reduce the\npower consumption of LLMs by **48.9%** (1252 W for A100 with AMD EPYC 7V13 vs 613 W for Intel® Xeon® Gold 6538N) while providing production ready",
+        "The current sequential approach employed by LLMs involves generating one token at a time based on the input prompt and the preceding tokens,\npersisting until a stop token or the predetermined maximum tokens are reached for each request. This method, while functional, restricts the optimal\nutilization of available resources [2], [3]. Elevating the tokens generated per second is crucial in mitigating the expenses associated with running",
+        "| bigcode/starcoderbase-3b | with bud engine multiworker | 3969.44 | 670.32 |\n| codellama/CodeLlama-7b-hf | without bud engine multiworker | 32.17 | 4.36 |\n| codellama/CodeLlama-7b-hf | with bud engine | 593.74 | 93.69 |"
+      ],
+      "expected_answer": "Figure 1 shows a **18–22× improvement in generated token per second** (from 9.31 to 167.58 tokens/s for bigcode/starcoderbase-3b without the Bud engine, to 3969.44 tokens/s with the Bud engine multiworker). The figure is measured on **32 vCPU** (4th Gen Intel® Xeon® Scalable Processors) on a machine with **NUMA node isolation**.",
+      "generated_answer": "The provided context does not contain information about Figure 1 or the maximum improvement in generated tokens per second achieved by the Bud Inference Engine on a specific hardware platform.  The context only mentions estimates of CPU usage reduction for LLMs using the Bud Inference Engine. \n",
+      "execution_time": 0.030530691146850586,
+      "deepeval_metrics": {
+        "AnswerRelevancyMetric": {
+          "score": 1.0,
+          "success": true,
+          "reason": "The score is 1.00 because the provided figure does not contain the information requested."
+        },
+        "FaithfulnessMetric": {
+          "score": 0.5,
+          "success": true,
+          "reason": "The faithfulness score is 0.50 because there are no contradictions in the actual output."
+        },
+        "ContextualPrecisionMetric": {
+          "score": 1.0,
+          "success": true,
+          "reason": "The score is 1.00 because the retrieved context with the highest contextual precision score is the only one that provides the maximum improvement in generated tokens per second achieved by the Bud Inference Engine and the hardware platform where this figure is measured. "
+        },
+        "ContextualRecallMetric": {
+          "score": 1.0,
+          "success": true,
+          "reason": "The contextual recall score of 1.00 indicates that the provided expected output aligns perfectly with the retrieval context, as all sentences are directly quoted from the figure caption."
+        }
+      }
+    },
+    {
+      "case": 2,
+      "question": "Refer to Table 1 and Figure 2 together: How does the bigcode/starcoderbase-3b model's token generation speed change across different numbers of parallel requests, and what does this reveal about the Bud Inference Engine's effectiveness?",
+      "retrieve_chunks": [
+        "evaluation shows the accelerated inference engine gives an **18-22x** improvement in the generated token per sec. The improvement is more with longer\nsequence and larger models. In addition to this, we can also run multiple workers in the\n| Model | Configuration | Processed tokens/s | Generated tokens/s |\n|---|---|---:|---:|",
+        "the required CPU memory for storing the KV cache of a request based on the max token length. But this will lead to internal fragmentation as the\nactual token generation might be less than the max token length. The reserved memory won’t be fully utilized. A request with a smaller token length\nwon’t be able to utilize this unused reserved memory. Also, the max length for different request would be different which lead to external memory",
+        "To address this challenge, we introduce an inference engine designed to enhance memory utilization by partitioning available memory into a series of\ntiles. This engine efficiently allocates incoming requests and assigns their respective tokens to specific memory tiles based on availability. By\noverseeing the computation and response delivery, the inference engine optimizes memory allocation per token, significantly enhancing performance for"
+      ],
+      "expected_answer": "For bigcode/starcoderbase-3b, token generation speed rises as parallel requests increase: 9.31 tok/s (100 requests, no Bud engine) → 167.58 tok/s (100 requests, with Bud engine) → 3969.44 tok/s (multiworker, 32 vCPU). Figure 2 further shows tokens/s climbing from 150 to 250 across 0 to 500 parallel requests. Combined, this reveals that the Bud Inference Engine's tile-based memory partitioning significantly boosts throughput by better memory utilization for batching, and multi-worker setups amplify this effect further.",
+      "generated_answer": "The provided context does not contain information about the token generation speed of the bigcode/starcoderbase-3b model across different numbers of parallel requests. Therefore, I cannot answer your query. \n",
+      "execution_time": 0.029783964157104492,
+      "deepeval_metrics": {
+        "AnswerRelevancyMetric": {
+          "score": 1.0,
+          "success": true,
+          "reason": "The model's token generation speed is not directly related to the Bud Inference Engine's effectiveness, as the provided information focuses on the bigcode/starcoderbase-3b model's token generation speed across different numbers of parallel requests."
+        },
+        "FaithfulnessMetric": {
+          "score": 0.0,
+          "success": false,
+          "reason": "The provided output does not align with the retrieval context, resulting in a faithfulness score of 0.00."
+        },
+        "ContextualPrecisionMetric": {
+          "score": 1.0,
+          "success": true,
+          "reason": "The score is 1.00 because the retrieved contexts provide strong evidence supporting the Bud Inference Engine's effectiveness, as they directly address the question about its performance and provide specific details about its impact on token generation speed."
+        },
+        "ContextualRecallMetric": {
+          "score": 1.0,
+          "success": true,
+          "reason": "The contextual recall score of 1.00 indicates a perfect match between the expected output and the retrieval context, highlighting the strong alignment between the two."
+        }
+      }
+    },
+    {
+      "case": 3,
+      "question": "Compare the token generation speeds (Table 1) for bigcode/starcoderbase-3b and codellama/CodeLlama-7b-hf at 100 requests with and without the Bud Inference Engine, and explain the performance gap between them.",
+      "retrieve_chunks": [
+        "| bigcode/starcoderbase-3b | with bud engine multiworker | 3969.44 | 670.32 |\n| codellama/CodeLlama-7b-hf | without bud engine multiworker | 32.17 | 4.36 |\n| codellama/CodeLlama-7b-hf | with bud engine | 593.74 | 93.69 |\n| codellama/CodeLlama-7b-hf | with bud engine multiworker | 1852.32 | 305.30 |",
+        "## 1. Introduction\nThe widespread integration of large language models (LLMs) across diverse applications, ranging from code generation to writing tasks, has surged in\nrecent times, creating a heightened demand for more efficient inference solutions. Enterprises are increasingly leveraging LLMs to enhance various",
+        "| 200 | ~220 | ~80 |\n| 300 | ~230 | ~90 |\n| 400 | ~240 | ~100 |\n| 500 | ~250 | ~110 |\nFigure 2: This shows the tokens/s increases with the number of parallel requests increases due to the better utilization of the memory\nTo address this challenge, we introduce an inference engine designed to enhance memory utilization by partitioning available memory into a series of"
+      ],
+      "expected_answer": "At 100 requests, bigcode/starcoderbase-3b achieves 9.31 tok/s without the Bud engine and 167.58 tok/s with it (18× improvement). CodeLlama-7b-hf achieves 4.36 tok/s without the Bud engine and 93.69 tok/s with it (21.5× improvement). The gap between the two models stems from their different model sizes and computational demands: the 7B CodeLlama model benefits from the Bud engine's parallel tile-based memory allocation, but its absolute throughput is lower than the 3B Starcoderbase model's raw sequential throughput, highlighting how the engine maximizes per-token memory utilization for each model type.",
+      "generated_answer": "The provided data shows that the token generation speed for bigcode/starcoderbase-3b with the Bud Inference Engine is significantly faster than without it, achieving 670.32 tokens/s compared to 3969.44 tokens/s.  For codellama/CodeLlama-7b-hf, the token generation speed with the Bud Inference Engine is also faster, achieving 93.69 tokens/s with the Bud Inference Engine and 4.36 tokens/s without it.  The performance gap between the two models is more pronounced when using the Bud Inference Engine. \n",
+      "execution_time": 0.03414416313171387,
+      "deepeval_metrics": {
+        "AnswerRelevancyMetric": {
+          "score": 1.0,
+          "success": true,
+          "reason": "The score is 1.00 because the output does not provide a comparison of token generation speeds for the specified models and does not explain the performance gap."
+        },
+        "FaithfulnessMetric": {
+          "score": 1.0,
+          "success": true,
+          "reason": "The actual output perfectly aligns with the retrieval context, resulting in a faithfulness score of 1.00."
+        },
+        "ContextualPrecisionMetric": {
+          "score": 1.0,
+          "success": true,
+          "reason": "The score is 1.00 because the provided contexts are relevant to the input and explain the performance gap between the models, highlighting the impact of the Bud Inference Engine on throughput. "
+        },
+        "ContextualRecallMetric": {
+          "score": 1.0,
+          "success": true,
+          "reason": "The contextual recall score of 1.00 indicates that the retrieval context effectively captures the information about the performance of different language models and their relationship to the Bud engine."
+        }
+      }
+    },
+    {
+      "case": 4,
+      "question": "Based on Table 1 and the text, what is the absolute token generation speed (in tokens/s) for codellama/CodeLlama-7b-hf with the Bud Inference Engine at 100 requests, and what does this value represent relative to its baseline?",
+      "retrieve_chunks": [
+        "To address this challenge, we introduce an inference engine designed to enhance memory utilization by partitioning available memory into a series of\ntiles. This engine efficiently allocates incoming requests and assigns their respective tokens to specific memory tiles based on availability. By\noverseeing the computation and response delivery, the inference engine optimizes memory allocation per token, significantly enhancing performance for",
+        "|codellama/CodeLlama-7b-hf|100|4.36|93.69|\nTable 1: Token generation speed for various models on 4th Gen Intel® Xeon® Scalable Processors with 32 vCPU and 100 requests\nIn pursuit of cost-effective inference, we explore the feasibility of performing the same computations on Intel® Xeon® Scalable Processors.",
+        "enhance throughput by 1) Exploiting the parallel processing capabilities of modern CPU architectures, 2) Batching the inference request. Our\nevaluation shows the accelerated inference engine gives an **18-22x** improvement in the generated token per sec. The improvement is more with longer\nsequence and larger models. In addition to this, we can also run multiple workers in the"
+      ],
+      "expected_answer": "codellama/CodeLlama-7b-hf with the Bud Inference Engine at 100 requests achieves a token generation speed of **93.69 tokens/s**, compared to 4.36 tokens/s without the Bud engine. This represents a **21.5× improvement** (93.69 / 4.36), demonstrating the significant throughput gain from the engine's memory partitioning and batching optimization for this model.",
+      "generated_answer": "The provided text states that the inference engine gives an **18-22x** improvement in the generated token per sec.  However, it does not provide the absolute token generation speed for codellama/CodeLlama-7b-hf with the Bud Inference Engine at 100 requests.  The table only shows the token generation speed for various models on 4th Gen Intel® Xeon® Scalable Processors with 32 vCPU and 100 requests. \n",
+      "execution_time": 0.0335850715637207,
+      "deepeval_metrics": {
+        "AnswerRelevancyMetric": {
+          "score": 0.6666666666666666,
+          "success": true,
+          "reason": "The score is 0.67 because the output only mentions the inference engine's improvement in token per sec, not the absolute token generation speed."
+        },
+        "FaithfulnessMetric": {
+          "score": 1.0,
+          "success": true,
+          "reason": "The actual output perfectly aligns with the retrieval context, resulting in a faithfulness score of 1.00."
+        },
+        "ContextualPrecisionMetric": {
+          "score": 1.0,
+          "success": true,
+          "reason": "The score is 1.00 because the retrieved contexts provide strong evidence for the token generation speed, but the provided context does not explicitly state the absolute token generation speed for codellama/CodeLlama-7b-hf with the Bud Inference Engine at 100 requests."
+        },
+        "ContextualRecallMetric": {
+          "score": 1.0,
+          "success": true,
+          "reason": "The score is 1.00 because the provided text directly relates to the context about the Bud Inference Engine and its performance improvements."
+        }
+      }
+    },
+    {
+      "case": 5,
+      "question": "Combining Figure 1 and Table 1, what is the token generation speed for bigcode/starcoderbase-3b with the Bud Inference Engine multiworker configuration, and how does this value compare to the single-worker (with Bud engine) value?",
+      "retrieve_chunks": [
+        "| bigcode/starcoderbase-3b | without bud engine | 63.29 | 9.31 |\n| bigcode/starcoderbase-3b | with bud engine | 992.36 | 167.58 |\n| bigcode/starcoderbase-3b | with bud engine multiworker | 3969.44 | 670.32 |\n| codellama/CodeLlama-7b-hf | without bud engine multiworker | 32.17 | 4.36 |\n| codellama/CodeLlama-7b-hf | with bud engine | 593.74 | 93.69 |",
+        "experiences inefficiencies in memory allocation and grapples with both internal and external CPU memory fragmentation issues. Current systems reserve\nthe required CPU memory for storing the KV cache of a request based on the max token length. But this will lead to internal fragmentation as the\nactual token generation might be less than the max token length. The reserved memory won’t be fully utilized. A request with a smaller token length",
+        "| 200 | ~220 | ~80 |\n| 300 | ~230 | ~90 |\n| 400 | ~240 | ~100 |\n| 500 | ~250 | ~110 |\nFigure 2: This shows the tokens/s increases with the number of parallel requests increases due to the better utilization of the memory\nTo address this challenge, we introduce an inference engine designed to enhance memory utilization by partitioning available memory into a series of"
+      ],
+      "expected_answer": "The bigcode/starcoderbase-3b with the Bud Inference Engine multiworker configuration achieves a token generation speed of **3969.44 tokens/s** (generated token/s: 670.32). This is compared to the single-worker (with Bud engine) value of 167.58 tokens/s (generated token/s: 93.69 for the same model in Table 1, or 992.36 processed tokens/s / 167.58 generated token/s). The multiworker configuration provides a **~23.7× increase** in generated token per second, demonstrating that the combination of tile-based memory partitioning and NUMA node isolation yields further substantial throughput gains on the 4th Gen Intel Xeon Scalable Processors.",
+      "generated_answer": "The provided context does not contain information about the token generation speed for bigcode/starcoderbase-3b with the Bud Inference Engine multiworker configuration.  It does, however, state that the token generation speed increases with the number of parallel requests. \n",
+      "execution_time": 0.0384213924407959,
+      "deepeval_metrics": {
+        "AnswerRelevancyMetric": {
+          "score": 1.0,
+          "success": true,
+          "reason": "The score is 1.00 because the provided information does not contain the requested data. The output does not contain the token generation speed for the specified configuration."
+        },
+        "FaithfulnessMetric": {
+          "score": 0.5,
+          "success": true,
+          "reason": "The faithfulness score is 0.50 because there are no contradictions in the actual output."
+        },
+        "ContextualPrecisionMetric": {
+          "score": 1.0,
+          "success": true,
+          "reason": "The score is 1.00 because all relevant nodes are ranked higher than irrelevant nodes."
+        },
+        "ContextualRecallMetric": {
+          "score": 0.5714285714285714,
+          "success": true,
+          "reason": "The score is 0.57 because the text discusses the multiworker configuration's performance gains, which are directly related to the retrieval context."
+        }
+      }
+    }
+  ]
+}
