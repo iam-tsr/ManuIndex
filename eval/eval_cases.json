@@ -1,0 +1,24 @@
+{
+  "rag_evaluation": [
+    {
+      "question": "Based on Figure 1, what is the maximum improvement in generated token per second achieved by the Bud Inference Engine, and on which hardware platform is this figure measured?",
+      "expected_answer": "Figure 1 shows a **18–22× improvement in generated token per second** (from 9.31 to 167.58 tokens/s for bigcode/starcoderbase-3b without the Bud engine, to 3969.44 tokens/s with the Bud engine multiworker). The figure is measured on **32 vCPU** (4th Gen Intel® Xeon® Scalable Processors) on a machine with **NUMA node isolation**."
+    },
+    {
+      "question": "Refer to Table 1 and Figure 2 together: How does the bigcode/starcoderbase-3b model's token generation speed change across different numbers of parallel requests, and what does this reveal about the Bud Inference Engine's effectiveness?",
+      "expected_answer": "For bigcode/starcoderbase-3b, token generation speed rises as parallel requests increase: 9.31 tok/s (100 requests, no Bud engine) → 167.58 tok/s (100 requests, with Bud engine) → 3969.44 tok/s (multiworker, 32 vCPU). Figure 2 further shows tokens/s climbing from 150 to 250 across 0 to 500 parallel requests. Combined, this reveals that the Bud Inference Engine's tile-based memory partitioning significantly boosts throughput by better memory utilization for batching, and multi-worker setups amplify this effect further."
+    },
+    {
+      "question": "Compare the token generation speeds (Table 1) for bigcode/starcoderbase-3b and codellama/CodeLlama-7b-hf at 100 requests with and without the Bud Inference Engine, and explain the performance gap between them.",
+      "expected_answer": "At 100 requests, bigcode/starcoderbase-3b achieves 9.31 tok/s without the Bud engine and 167.58 tok/s with it (18× improvement). CodeLlama-7b-hf achieves 4.36 tok/s without the Bud engine and 93.69 tok/s with it (21.5× improvement). The gap between the two models stems from their different model sizes and computational demands: the 7B CodeLlama model benefits from the Bud engine's parallel tile-based memory allocation, but its absolute throughput is lower than the 3B Starcoderbase model's raw sequential throughput, highlighting how the engine maximizes per-token memory utilization for each model type."
+    },
+    {
+      "question": "Based on Table 1 and the text, what is the absolute token generation speed (in tokens/s) for codellama/CodeLlama-7b-hf with the Bud Inference Engine at 100 requests, and what does this value represent relative to its baseline?",
+      "expected_answer": "codellama/CodeLlama-7b-hf with the Bud Inference Engine at 100 requests achieves a token generation speed of **93.69 tokens/s**, compared to 4.36 tokens/s without the Bud engine. This represents a **21.5× improvement** (93.69 / 4.36), demonstrating the significant throughput gain from the engine's memory partitioning and batching optimization for this model."
+    },
+    {
+      "question": "Combining Figure 1 and Table 1, what is the token generation speed for bigcode/starcoderbase-3b with the Bud Inference Engine multiworker configuration, and how does this value compare to the single-worker (with Bud engine) value?",
+      "expected_answer": "The bigcode/starcoderbase-3b with the Bud Inference Engine multiworker configuration achieves a token generation speed of **3969.44 tokens/s** (generated token/s: 670.32). This is compared to the single-worker (with Bud engine) value of 167.58 tokens/s (generated token/s: 93.69 for the same model in Table 1, or 992.36 processed tokens/s / 167.58 generated token/s). The multiworker configuration provides a **~23.7× increase** in generated token per second, demonstrating that the combination of tile-based memory partitioning and NUMA node isolation yields further substantial throughput gains on the 4th Gen Intel Xeon Scalable Processors."
+    }
+  ]
+}
