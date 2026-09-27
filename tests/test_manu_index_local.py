@@ -72,6 +72,24 @@ class ManuIndexLocalDataStoreTests(unittest.TestCase):
         finally:
             store.close()
 
+    def test_add_document_persists_overlapping_chunks(self) -> None:
+        store, index = self.make_index()
+        try:
+            doc_id = index.add_document(
+                "one two three four five six",
+                chunk_size=10,
+                chunk_overlap=5,
+            )
+
+            chunks = store.get_document_chunks([doc_id])
+
+            self.assertEqual(
+                [chunk["text"] for chunk in chunks],
+                ["one two", "two three", "four five", "five six"],
+            )
+        finally:
+            store.close()
+
 
 if __name__ == "__main__":
     unittest.main()

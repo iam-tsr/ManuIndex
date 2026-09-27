@@ -54,6 +54,7 @@ class ManuIndex:
         document: str | bytes | os.PathLike[str],
         metadata: dict[str, Any] | None = None,
         chunk_size: int = 150,
+        chunk_overlap: int = 100,
     ) -> str:
         """Ingest text, a PDF path, or PDF bytes into local storage.
 
@@ -70,10 +71,11 @@ class ManuIndex:
         summary = self._create_summary(document_text)
         summary_embedding = self.embeddings.embed_query(summary)
 
-        chunks = self._deterministic_splitter(
+        chunks = self._text_splitter(
             document=document_text,
             doc_id=doc_id,
             chunk_size=chunk_size,
+            chunk_overlap=chunk_overlap,
         )
         if not chunks:
             self.datastore.add_document(
@@ -128,16 +130,12 @@ class ManuIndex:
             top_k=candidate_k,
             lambda_mult=lambda_mult,
         )
-        expanded_chunks = self._neighbour_chunking(
-            documents=candidates,
-            chunks_by_key=self._chunks_by_key(chunks),
-        )
-        rerank_chunks = self._dedupe_chunks(expanded_chunks)
-        if len(rerank_chunks) <= top_k:
-            return [chunk.text for chunk in rerank_chunks]
+        candidate_chunks = [result.chunk for result in candidates]
+        if len(candidate_chunks) <= top_k:
+            return [chunk.text for chunk in candidate_chunks]
 
         final_results = self._sparse_search(
-            chunks=rerank_chunks,
+            chunks=candidate_chunks,
             query=query,
             top_k=top_k,
         )
@@ -263,15 +261,18 @@ class ManuIndex:
     ) -> list[ScoredChunk]:
         return BM25Retriever(chunks).search(query=query, top_k=top_k)
 
-    def _deterministic_splitter(
+    def _text_splitter(
         self,
         document: str,
         doc_id: str,
         chunk_size: int,
+        chunk_overlap: int,
     ) -> list[IndexedChunk]:
         documents: list[IndexedChunk] = []
 
-        for chunk_index, piece in enumerate(self._split_text(document, chunk_size)):
+        for chunk_index, piece in enumerate(
+            self._split_text(document, chunk_size, chunk_overlap)
+        ):
             if not piece.strip():
                 continue
 
@@ -283,63 +284,15 @@ class ManuIndex:
 
         return documents
 
-    def _split_text(self, text: str, chunk_size: int) -> list[str]:
+    def _split_text(self, text: str, chunk_size: int, chunk_overlap: int) -> list[str]:
         if chunk_size <= 0:
             raise ValueError("chunk_size must be greater than 0.")
+        if chunk_overlap < 0:
+            raise ValueError("chunk_overlap must not be negative.")
 
         text_splitter = RecursiveCharacterTextSplitter(
             chunk_size=chunk_size,
-            chunk_overlap=0,
+            chunk_overlap=chunk_overlap,
             separators=["\n\n", "\n", " "],
         )
         return text_splitter.split_text(text)
-
-    def _chunks_by_key(self, chunks: list[IndexedChunk]) -> dict[tuple[str, int], IndexedChunk]:
-        return {chunk.key: chunk for chunk in chunks}
-
-    def _neighbour_chunking(
-        self,
-        documents: list[ScoredChunk],
-        chunks_by_key: dict[tuple[str, int], IndexedChunk],
-    ) -> list[IndexedChunk]:
-        expanded_documents: list[IndexedChunk] = []
-        used_chunk_keys: set[tuple[str, int]] = set()
-
-        for result in documents:
-            chunk = result.chunk
-            if chunk.key in used_chunk_keys:
-                continue
-
-            neighbour_keys = [
-                (chunk.doc_id, index)
-                for index in (chunk.chunk_index - 1, chunk.chunk_index, chunk.chunk_index + 1)
-                if (chunk.doc_id, index) in chunks_by_key
-                and (chunk.doc_id, index) not in used_chunk_keys
-            ]
-            if not neighbour_keys:
-                continue
-
-            page_content = "\n".join(chunks_by_key[key].text for key in neighbour_keys)
-            metadata = dict(chunk.metadata)
-            metadata["chunk_indices"] = [key[1] for key in neighbour_keys]
-            expanded_documents.append(IndexedChunk(
-                doc_id=chunk.doc_id,
-                chunk_index=chunk.chunk_index,
-                text=page_content,
-                metadata=metadata,
-            ))
-            used_chunk_keys.update(neighbour_keys)
-
-        return expanded_documents
-
-    def _dedupe_chunks(self, chunks: list[IndexedChunk]) -> list[IndexedChunk]:
-        seen: set[str] = set()
-        unique_documents: list[IndexedChunk] = []
-
-        for chunk in chunks:
-            if chunk.text in seen:
-                continue
-            seen.add(chunk.text)
-            unique_documents.append(chunk)
-
-        return unique_documents
