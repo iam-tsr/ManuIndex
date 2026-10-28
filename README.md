@@ -24,28 +24,6 @@ Instead of retrieving chunks from one mixed search space, ManuIndex routes the q
 - **Cleaner final ranking**: ONNX reranking filters noisy candidates before generation.
 - **Practical deployment**: embeddings and reranking can run locally with ONNX Runtime.
 
-## Retrieval Flow
-
-```mermaid
-flowchart TD
-    A[Document] --> B[Summary generation]
-    A --> C[Deterministic chunking]
-    B --> D[Summary embedding]
-    C --> E[Per-document FAISS index]
-    C --> F[Per-document BM25 index]
-
-    Q[Query] --> R[Query embedding]
-    R --> D
-    D --> G[Select top documents]
-    G --> E
-    G --> F
-    E --> H[Hybrid retrieval]
-    F --> H
-    H --> I[Neighbor expansion]
-    I --> J[ONNX reranking]
-    J --> K[Final contexts]
-```
-
 ## Benchmark Snapshot
 
 The suite compares **6 retrieval pipelines** (GRAG + 5 standard RAG variants) on **2 datasets**, with fixed `Ctx F1@3` and a **Qwen2.5-3B** answer/evaluation LLM. **RAGAS** is used for faithfulness, context precision/recall, and derived context F1; HuggingFace evaluate supplies answer recall and answer F1. Full tables, plots, and methodology live in [`benchmark/README.md`](https://github.com/iam-tsr/ManuIndex/blob/main/benchmark/README.md).
